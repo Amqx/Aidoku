@@ -45,6 +45,32 @@ extension CoreDataManager {
         return (try? context.fetch(request))?.first
     }
 
+    /// Get particular chapter objects for a manga, keyed by chapter id.
+    ///
+    /// Uses a single fetch request (batched, to keep the `IN` list a reasonable size) rather than one
+    /// request per chapter.
+    func getChapters(
+        sourceId: String,
+        mangaId: String,
+        chapterIds: [String],
+        context: NSManagedObjectContext? = nil
+    ) -> [String: ChapterObject] {
+        guard !chapterIds.isEmpty else { return [:] }
+        let context = context ?? self.context
+        var result: [String: ChapterObject] = [:]
+        for batch in chapterIds.chunked(into: Self.fetchBatchSize) {
+            let request = ChapterObject.fetchRequest()
+            request.predicate = NSPredicate(
+                format: "sourceId == %@ AND mangaId == %@ AND id IN %@",
+                sourceId, mangaId, batch
+            )
+            for object in (try? context.fetch(request)) ?? [] where result[object.id] == nil {
+                result[object.id] = object
+            }
+        }
+        return result
+    }
+
     /// Get the chapter objects for a manga.
     func getChapters(sourceId: String, mangaId: String, context: NSManagedObjectContext? = nil) -> [ChapterObject] {
         let context = context ?? self.context

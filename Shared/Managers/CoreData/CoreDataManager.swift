@@ -14,6 +14,12 @@ final class CoreDataManager {
 
     static let shared = CoreDataManager()
 
+    /// The maximum number of identifiers to put in a single `IN` predicate.
+    ///
+    /// SQLite limits how many variables a statement can bind, so bulk fetches split their
+    /// identifiers into batches of this size.
+    static let fetchBatchSize = 500
+
     private var observers: [NSObjectProtocol] = []
     private var lastHistoryToken: NSPersistentHistoryToken?
 
