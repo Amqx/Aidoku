@@ -142,7 +142,7 @@ struct AddSourceView: View {
             .sheet(isPresented: $importing) {
                 DocumentPickerView(
                     allowedContentTypes: [
-                        UTType(exportedAs: "app.aidoku.Aidoku.aix", conformingTo: .zip),
+                        UTType(exportedAs: "org.ry-st.Aidoku.aix", conformingTo: .zip),
                         .init(filenameExtension: "aix")!
                     ],
                     onDocumentsPicked: { urls in

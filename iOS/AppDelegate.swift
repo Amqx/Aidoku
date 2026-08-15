@@ -14,7 +14,7 @@ import UserNotifications
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 #if CANONICAL_BUILD          // true only for App-Store scheme
-    static let canonicalID = "app.aidoku.Aidoku"
+    static let canonicalID = "org.ry-st.Aidoku"
 #else
     static let canonicalID = Bundle.main.bundleIdentifier ?? ""
 #endif
@@ -239,7 +239,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 config.urlCache = nil
                 return DataLoader(configuration: config)
             }()
-            let dataCache = try? DataCache(name: "app.aidoku.Aidoku.datacache") // disk cache
+            let dataCache = try? DataCache(name: "org.ry-st.Aidoku.datacache") // disk cache
             let imageCache = Nuke.ImageCache() // memory cache
             dataCache?.sizeLimit = 500 * 1024 * 1024
             imageCache.costLimit = 100 * 1024 * 1024
