@@ -11,11 +11,28 @@ import Nuke
 import UIKit
 
 class MangaListCell: UICollectionViewCell {
+    // row heights used by the collection view layouts that display these cells
+    static let rowHeight: CGFloat = 100
+    static let compactRowHeight: CGFloat = 56
+
+    private static let coverHeight: CGFloat = 100
+    private static let compactCoverHeight: CGFloat = 46
+
     private var identifier: MangaIdentifier?
     private var url: String?
     private var imageTask: ImageTask?
 
     private var isEditing = false
+    private var hasSubtitle = false
+    private var hasTags = false
+
+    /// Shrinks the cell down to a single line of text next to a small cover, separated by a hairline.
+    var compact = false {
+        didSet {
+            guard oldValue != compact else { return }
+            applyCompactState()
+        }
+    }
 
     var badgeNumber: Int {
         get { badgeView.badgeNumber }
@@ -90,9 +107,22 @@ class MangaListCell: UICollectionViewCell {
     private lazy var selectionView = SelectionCheckView()
     private lazy var badgeView = DoubleBadgeView()
 
+    private lazy var separatorView = {
+        let separatorView = UIView()
+        separatorView.backgroundColor = .separator
+        separatorView.isHidden = true
+        return separatorView
+    }()
+
     private var coverLeadingConstraint: NSLayoutConstraint?
+    private var coverWidthConstraint: NSLayoutConstraint?
+    private var coverHeightConstraint: NSLayoutConstraint?
+    private var textLeadingConstraint: NSLayoutConstraint?
     private var textTrailingConstraint: NSLayoutConstraint?
     private var badgeWidthConstraint: NSLayoutConstraint?
+    private var bookmarkWidthConstraint: NSLayoutConstraint?
+    private var bookmarkHeightConstraint: NSLayoutConstraint?
+    private var separatorHeightConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -117,6 +147,7 @@ class MangaListCell: UICollectionViewCell {
         contentView.addSubview(coverImageView)
         contentView.addSubview(titleStackView)
         contentView.addSubview(badgeView)
+        contentView.addSubview(separatorView)
     }
 
     func constrain() {
@@ -125,10 +156,17 @@ class MangaListCell: UICollectionViewCell {
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         selectionView.translatesAutoresizingMaskIntoConstraints = false
         badgeView.translatesAutoresizingMaskIntoConstraints = false
+        separatorView.translatesAutoresizingMaskIntoConstraints = false
 
         coverLeadingConstraint = coverImageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor)
+        coverWidthConstraint = coverImageView.widthAnchor.constraint(equalToConstant: Self.coverHeight * 2/3)
+        coverHeightConstraint = coverImageView.heightAnchor.constraint(equalToConstant: Self.coverHeight)
+        textLeadingConstraint = titleStackView.leadingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: 12)
         textTrailingConstraint = titleStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor)
         badgeWidthConstraint = badgeView.widthAnchor.constraint(equalToConstant: badgeView.intrinsicContentSize.width)
+        bookmarkWidthConstraint = bookmarkImageView.widthAnchor.constraint(equalToConstant: 17)
+        bookmarkHeightConstraint = bookmarkImageView.heightAnchor.constraint(equalToConstant: 27)
+        separatorHeightConstraint = separatorView.heightAnchor.constraint(equalToConstant: hairlineHeight)
 
         NSLayoutConstraint.activate([
             selectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -138,23 +176,71 @@ class MangaListCell: UICollectionViewCell {
 
             coverLeadingConstraint!,
             coverImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            coverImageView.widthAnchor.constraint(equalToConstant: 100 * 2/3),
-            coverImageView.heightAnchor.constraint(equalToConstant: 100),
+            coverWidthConstraint!,
+            coverHeightConstraint!,
 
             bookmarkImageView.trailingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: -8),
             bookmarkImageView.topAnchor.constraint(equalTo: coverImageView.topAnchor),
-            bookmarkImageView.widthAnchor.constraint(equalToConstant: 17),
-            bookmarkImageView.heightAnchor.constraint(equalToConstant: 27),
+            bookmarkWidthConstraint!,
+            bookmarkHeightConstraint!,
 
+            textLeadingConstraint!,
             textTrailingConstraint!,
-            titleStackView.leadingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: 12),
             titleStackView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
 
             badgeWidthConstraint!,
             badgeView.heightAnchor.constraint(equalToConstant: 20),
             badgeView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            badgeView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+            badgeView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+
+            separatorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            separatorView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            separatorView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            separatorHeightConstraint!
         ])
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.displayScale != previousTraitCollection?.displayScale {
+            separatorHeightConstraint?.constant = hairlineHeight
+        }
+    }
+
+    private var hairlineHeight: CGFloat {
+        1 / max(traitCollection.displayScale, 1)
+    }
+
+    private func applyCompactState() {
+        let coverHeight = compact ? Self.compactCoverHeight : Self.coverHeight
+        coverHeightConstraint?.constant = coverHeight
+        // compact covers are square, cropped to the center of the artwork
+        coverWidthConstraint?.constant = compact ? coverHeight : coverHeight * 2/3
+        coverImageView.layer.cornerRadius = compact ? 3 : 5
+
+        bookmarkWidthConstraint?.constant = compact ? 11 : 17
+        bookmarkHeightConstraint?.constant = compact ? 17 : 27
+
+        textLeadingConstraint?.constant = compact ? 10 : 12
+        titleLabel.font = if compact {
+            // compact rows have a fixed height, so the title can't grow indefinitely
+            UIFontMetrics(forTextStyle: .subheadline).scaledFont(
+                for: .systemFont(ofSize: 15),
+                maximumPointSize: 19
+            )
+        } else {
+            UIFont.preferredFont(forTextStyle: .body)
+        }
+        titleLabel.numberOfLines = compact ? 1 : 2
+
+        separatorView.isHidden = !compact
+        updateDetailVisibility()
+    }
+
+    // the subtitle and tags are only shown in the regular layout
+    private func updateDetailVisibility() {
+        subtitleLabel.isHidden = compact || !hasSubtitle
+        tagScrollView.isHidden = compact || !hasTags
     }
 
     override func prepareForReuse() {
@@ -163,6 +249,9 @@ class MangaListCell: UICollectionViewCell {
         imageTask?.cancel()
         imageTask = nil
         setBadgeVisible(false)
+        hasSubtitle = false
+        hasTags = false
+        updateDetailVisibility()
         alpha = 1
     }
 
@@ -198,6 +287,7 @@ extension MangaListCell {
             selectionView.setSelected(false, animated: false)
         }
         let shouldShowBadge = editing ? false : badgeView.badgeNumber > 0 || badgeView.badgeNumber2 > 0
+        let coverOffset: CGFloat = editing ? (compact ? 32 : 40) : 0
         if animated {
             if editing {
                 self.selectionView.isHidden = false
@@ -205,7 +295,7 @@ extension MangaListCell {
             UIView.animate(withDuration: CATransaction.animationDuration()) {
                 self.setBadgeVisible(shouldShowBadge)
                 self.coverImageView.alpha = editing ? 0.5 : 1
-                self.coverLeadingConstraint?.constant = editing ? 40 : 0
+                self.coverLeadingConstraint?.constant = coverOffset
                 self.layoutIfNeeded()
             } completion: { _ in
                 if !editing {
@@ -215,7 +305,7 @@ extension MangaListCell {
         } else {
             self.setBadgeVisible(shouldShowBadge)
             self.coverImageView.alpha = editing ? 0.5 : 1
-            self.coverLeadingConstraint?.constant = editing ? 40 : 0
+            self.coverLeadingConstraint?.constant = coverOffset
             self.selectionView.isHidden = !editing
         }
     }
@@ -238,15 +328,16 @@ extension MangaListCell {
         identifier = MangaIdentifier(sourceKey: manga.sourceKey, mangaKey: manga.key)
         titleLabel.text = manga.title
         subtitleLabel.text = manga.authors?.joined(separator: ", ")
-        subtitleLabel.isHidden = subtitleLabel.text?.isEmpty ?? true
+        hasSubtitle = !(subtitleLabel.text?.isEmpty ?? true)
         bookmarkImageView.image = isBookmarked ? UIImage(systemName: "bookmark.fill") : nil
 
         if let tags = manga.tags, !tags.isEmpty {
             tagScrollView.tags = tags
-            tagScrollView.isHidden = false
+            hasTags = true
         } else {
-            tagScrollView.isHidden = true
+            hasTags = false
         }
+        updateDetailVisibility()
 
         Task {
             await loadImage(url: manga.cover.flatMap { URL(string: $0) })
@@ -257,7 +348,8 @@ extension MangaListCell {
         identifier = MangaIdentifier(sourceKey: info.sourceId, mangaKey: info.mangaId)
         titleLabel.text = info.title
         subtitleLabel.text = info.author
-        subtitleLabel.isHidden = subtitleLabel.text?.isEmpty ?? true
+        hasSubtitle = !(subtitleLabel.text?.isEmpty ?? true)
+        updateDetailVisibility()
 
         Task {
             await loadImage(url: info.coverUrl)

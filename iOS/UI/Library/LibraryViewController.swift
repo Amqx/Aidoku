@@ -72,6 +72,15 @@ class LibraryViewController: OldMangaCollectionViewController {
         }
     }
 
+    override var usesCompactListLayout: Bool {
+        get {
+            UserDefaults.standard.bool(forKey: "Library.compactListView")
+        }
+        set {
+            UserDefaults.standard.setValue(newValue, forKey: "Library.compactListView")
+        }
+    }
+
     override init() {
         super.init()
     }
@@ -1085,29 +1094,28 @@ extension LibraryViewController {
             self.setEditing(true, animated: true)
         }
 
-        let layoutActions = [
-            UIAction(
-                title: NSLocalizedString("LAYOUT_GRID"),
-                image: UIImage(systemName: "square.grid.2x2"),
-                state: usesListLayout ? .off : .on
+        func layoutAction(titleKey: String, systemName: String, list: Bool, compact: Bool) -> UIAction {
+            let isCurrent = usesListLayout == list && (!list || usesCompactListLayout == compact)
+            return UIAction(
+                title: NSLocalizedString(titleKey),
+                image: UIImage(systemName: systemName),
+                state: isCurrent ? .on : .off
             ) { [weak self] _ in
-                guard let self, self.usesListLayout else { return }
-                self.usesListLayout = false
-                self.collectionView.setCollectionViewLayout(self.makeCollectionViewLayout(), animated: true)
-                self.collectionView.reloadData()
-                self.updateMoreMenu()
-            },
-            UIAction(
-                title: NSLocalizedString("LAYOUT_LIST"),
-                image: UIImage(systemName: "list.bullet"),
-                state: usesListLayout ? .on : .off
-            ) { [weak self] _ in
-                guard let self, !self.usesListLayout else { return }
-                self.usesListLayout = true
+                guard let self, !isCurrent else { return }
+                self.usesListLayout = list
+                if list {
+                    self.usesCompactListLayout = compact
+                }
                 self.collectionView.setCollectionViewLayout(self.makeCollectionViewLayout(), animated: true)
                 self.collectionView.reloadData()
                 self.updateMoreMenu()
             }
+        }
+
+        let layoutActions = [
+            layoutAction(titleKey: "LAYOUT_GRID", systemName: "square.grid.2x2", list: false, compact: false),
+            layoutAction(titleKey: "LAYOUT_LIST", systemName: "list.bullet", list: true, compact: false),
+            layoutAction(titleKey: "LAYOUT_COMPACT_LIST", systemName: "list.dash", list: true, compact: true)
         ]
 
         let sortMenu = UIMenu(

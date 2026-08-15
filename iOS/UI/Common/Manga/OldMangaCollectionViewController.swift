@@ -12,6 +12,8 @@ class OldMangaCollectionViewController: BaseCollectionViewController {
     static let sectionSpacing: CGFloat = 6 // extra spacing betweeen sections
 
     var usesListLayout = false
+    /// Uses shorter list rows, ignored unless `usesListLayout` is enabled.
+    var usesCompactListLayout = false
 
     lazy var dataSource = makeDataSource()
 
@@ -67,6 +69,7 @@ class OldMangaCollectionViewController: BaseCollectionViewController {
     }
 
     func configure(cell: MangaListCell, info: MangaInfo, indexPath: IndexPath) {
+        cell.compact = usesCompactListLayout
         cell.configure(with: info)
         cell.setSelected(cell.isSelected, animated: false)
 
@@ -82,7 +85,7 @@ class OldMangaCollectionViewController: BaseCollectionViewController {
             switch Section(rawValue: sectionIndex) {
                 case .pinned, .regular:
                     if self.usesListLayout {
-                        return Self.makeListLayoutSection(environment: environment)
+                        return Self.makeListLayoutSection(environment: environment, compact: self.usesCompactListLayout)
                     } else {
                         return Self.makeGridLayoutSection(environment: environment)
                     }
@@ -98,9 +101,12 @@ class OldMangaCollectionViewController: BaseCollectionViewController {
 }
 
 extension OldMangaCollectionViewController {
-    static func makeListLayoutSection(environment: NSCollectionLayoutEnvironment) -> NSCollectionLayoutSection {
-        let itemHeight: CGFloat = 100
-        let spacing: CGFloat = 10
+    static func makeListLayoutSection(
+        environment: NSCollectionLayoutEnvironment,
+        compact: Bool = false
+    ) -> NSCollectionLayoutSection {
+        let itemHeight: CGFloat = compact ? MangaListCell.compactRowHeight : MangaListCell.rowHeight
+        let spacing: CGFloat = compact ? 0 : 10
 
         let item = NSCollectionLayoutItem(layoutSize: NSCollectionLayoutSize(
             widthDimension: .fractionalWidth(1),
@@ -221,7 +227,7 @@ extension OldMangaCollectionViewController {
         if cell is MangaListCell {
             // add some padding to list cell
             let parameters = UIPreviewParameters()
-            let padding: CGFloat = 8
+            let padding: CGFloat = usesCompactListLayout ? 4 : 8
             let rect = cell.bounds.insetBy(dx: -padding, dy: -padding)
             parameters.visiblePath = UIBezierPath(roundedRect: rect, cornerRadius: 12)
 
