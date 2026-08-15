@@ -464,6 +464,8 @@ extension MangaManager {
 #endif
 
         NotificationCenter.default.post(name: .updateLibrary, object: nil)
+
+        scheduleLibraryRefresh()
     }
 
     /// Check if a manga should skip updating based on skip options.
