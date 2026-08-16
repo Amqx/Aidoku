@@ -92,6 +92,21 @@ extension FileManager {
             try? moveItem(at: fileURL, to: destinationURL)
         }
     }
+
+    func createTemporaryDirectory() -> URL? {
+        guard let base = temporaryDirectory else {
+            LogManager.logger.error("Failed to create temporary source directory")
+            return nil
+        }
+        let directory = base.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        do {
+            try createDirectory(at: directory, withIntermediateDirectories: true)
+            return directory
+        } catch {
+            LogManager.logger.error("Failed to create temporary source directory: \(error)")
+            return nil
+        }
+    }
 }
 
 extension String {
