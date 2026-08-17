@@ -901,7 +901,10 @@ extension LibraryViewController {
         ) as? LibraryCategorySelectionHeader) else {
             return
         }
+
         ignoreOptionChange = true
+        defer { ignoreOptionChange = false }
+
         var options: [LibraryCategorySelectionHeader.Section] = []
         if UserDefaults.standard.bool(forKey: "Library.showUncategorizedCategory") {
             options.append(.init(options: [NSLocalizedString("ALL"), NSLocalizedString("UNCATEGORIZED")]))
@@ -915,6 +918,7 @@ extension LibraryViewController {
             options.append(.init(title: NSLocalizedString("FILTER_GROUPS"), options: viewModel.filterGroups.map { $0.title }))
         }
         header.options = options
+
         if let currentCategory = viewModel.currentCategory {
             if let index = viewModel.categories.firstIndex(of: currentCategory) {
                 header.setSelectedOption(IndexPath(row: index, section: 1))
