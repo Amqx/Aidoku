@@ -281,7 +281,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         Task {
             await BackupManager.shared.scheduleAutoBackup()
-            await MangaManager.shared.scheduleLibraryRefresh()
+            if AppSettings.flags.libraryRefreshInProgress.get() {
+                presentAlert(
+                    title: NSLocalizedString("LIBRARY_REFRESH_INTERRUPTED"),
+                    message: NSLocalizedString("LIBRARY_REFRESH_INTERRUPTED_TEXT"),
+                    actions: [
+                        .init(title: NSLocalizedString("CANCEL"), style: .cancel),
+                        .init(title: NSLocalizedString("RESUME"), style: .default) { _ in
+                            AppSettings.flags.libraryRefreshInProgress.reset()
+                            Task {
+                                await MangaManager.shared.refreshLibrary()
+                            }
+                        }
+                    ]
+                )
+            } else {
+                await MangaManager.shared.scheduleLibraryRefresh()
+            }
         }
 
         UNUserNotificationCenter.current().delegate = self
