@@ -72,6 +72,8 @@
 			</array>
 		</dict>
 	</array>
+	<key>GitCommitHash</key>
+	<string>unknown</string>
 	<key>ICLOUD_CONTAINER_ID</key>
 	<string>$(ICLOUD_CONTAINER_ID)</string>
 	<key>NSAppTransportSecurity</key>
