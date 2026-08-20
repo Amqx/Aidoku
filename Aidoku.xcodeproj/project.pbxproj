@@ -429,6 +429,8 @@
 		FB7C28932E898DD9009FF6AF /* BackupCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7C28922E898DD8009FF6AF /* BackupCreateView.swift */; };
 		FB7D99CC3034504A005C7583 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CB30345047005C7583 /* Error.swift */; };
 		FB7D99CD3034504A005C7583 /* Error.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CB30345047005C7583 /* Error.swift */; };
+		FB7D99CF303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
+		FB7D99D0303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
 		FB7E441D2F0AB02B005EBCA0 /* InterfaceOrientationsViewModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7E441C2F0AB02B005EBCA0 /* InterfaceOrientationsViewModifier.swift */; };
 		FB7F05F42DDCCF4A0036B116 /* ReaderPageDescriptionButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7F05F32DDCCF4A0036B116 /* ReaderPageDescriptionButtonView.swift */; };
 		FB7F05F62DDCDC910036B116 /* HostingNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7F05F52DDCDC900036B116 /* HostingNode.swift */; };
@@ -625,8 +627,6 @@
 		FBFA03443008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */; };
 		FBFA03453008DF610008B4B6 /* SettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033B3008DF610008B4B6 /* SettingsKey.swift */; };
 		FBFA03463008DF610008B4B6 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033A3008DF610008B4B6 /* AppSettings.swift */; };
-		FB7D99CF303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
-		FB7D99D0303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
 		00A1B2C42EA7F1000012AB01 /* Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A1B2C32EA7F1000012AB01 /* Archive.swift */; };
 		00A1B2C52EA7F1000012AB01 /* Archive.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00A1B2C32EA7F1000012AB01 /* Archive.swift */; };
 /* End PBXBuildFile section */
@@ -967,6 +967,7 @@
 		FB7C28902E898D94009FF6AF /* BackupContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupContentView.swift; sourceTree = "<group>"; };
 		FB7C28922E898DD8009FF6AF /* BackupCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupCreateView.swift; sourceTree = "<group>"; };
 		FB7D99CB30345047005C7583 /* Error.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Error.swift; sourceTree = "<group>"; };
+		FB7D99CE303452F3005C7583 /* FlagSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagSettings.swift; sourceTree = "<group>"; };
 		FB7E441C2F0AB02B005EBCA0 /* InterfaceOrientationsViewModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceOrientationsViewModifier.swift; sourceTree = "<group>"; };
 		FB7F05F32DDCCF4A0036B116 /* ReaderPageDescriptionButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderPageDescriptionButtonView.swift; sourceTree = "<group>"; };
 		FB7F05F52DDCDC900036B116 /* HostingNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostingNode.swift; sourceTree = "<group>"; };
@@ -1135,7 +1136,6 @@
 		FBFA033B3008DF610008B4B6 /* SettingsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsKey.swift; sourceTree = "<group>"; };
 		FBFA033C3008DF610008B4B6 /* SettingsValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsValue.swift; sourceTree = "<group>"; };
 		FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsValue+Extensions.swift"; sourceTree = "<group>"; };
-		FB7D99CE303452F3005C7583 /* FlagSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagSettings.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
