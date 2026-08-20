@@ -615,6 +615,15 @@
 "AUTO" = "Auto";
 "LAST_BACKED_UP_%@" = "Last automatically backed up: %@";
 "READING_SESSIONS" = "Reading Sessions";
+"GOOGLE_DRIVE" = "Google Drive";
+"UPLOAD_BACKUPS" = "Upload Backups";
+"ACCOUNT" = "Account";
+"GOOGLE_DRIVE_INFO_%@" = "Automatic backups are uploaded to the %@ folder in your Google Drive.";
+"LAST_UPLOADED_%@" = "Last uploaded to Google Drive: %@";
+"GOOGLE_DRIVE_LOGIN_FAILED_TEXT" = "Failed to log in to Google Drive. Please try again.";
+"SYNC_NOW" = "Sync Now";
+"SYNC_FAILED" = "Sync Failed";
+"GOOGLE_DRIVE_SYNC_FAILED_TEXT" = "Failed to upload backups to Google Drive. Please try again.";
 
 // Advanced
 "LOGS" = "Logs";

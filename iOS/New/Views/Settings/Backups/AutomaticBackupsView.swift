@@ -5,12 +5,26 @@
 //  Created by Skitty on 11/13/25.
 //
 
+import AuthenticationServices
 import SwiftUI
 
 struct AutomaticBackupsView: View {
     @StateObject private var enabled = UserDefaultsBool(key: "AutomaticBackups.enabled")
 
+    @StateObject private var driveUploadEnabled = UserDefaultsBool(key: GoogleDriveClient.enabledKey)
+
+    @State private var driveSignedIn = false
+    @State private var driveAccount: String?
+    @State private var driveLastUpload: Double = 0
+    @State private var driveLoading = false
+    @State private var driveSyncing = false
+    @State private var showDriveLoginFailAlert = false
+    @State private var showDriveSyncFailAlert = false
+
     @Environment(\.dismiss) private var dismiss
+
+    // empty view controller to support login view presentation
+    private static var loginShimController = LoginShimViewController()
 
     var body: some View {
         PlatformNavigationStack {
@@ -59,8 +73,12 @@ struct AutomaticBackupsView: View {
                         toggle(key: "AutomaticBackups.sensitiveSettings", title: NSLocalizedString("SENSITIVE_SETTINGS"))
                     }
                 }
+
+                // stays visible while signed in, so drive access can always be revoked here
+                googleDriveSection
             }
             .animation(.default, value: enabled.value)
+            .animation(.default, value: driveSignedIn)
             .navigationTitle(NSLocalizedString("AUTOMATIC_BACKUPS"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -75,6 +93,25 @@ struct AutomaticBackupsView: View {
                     await BackupManager.shared.scheduleAutoBackup()
                 }
             }
+            .onChange(of: driveUploadEnabled.value) { _ in
+                // the scheduled task's network requirement depends on this
+                Task {
+                    await BackupManager.shared.scheduleAutoBackup()
+                }
+            }
+            .alert(NSLocalizedString("LOGIN_FAILED"), isPresented: $showDriveLoginFailAlert) {
+                Button(NSLocalizedString("OK"), role: .cancel) {}
+            } message: {
+                Text(NSLocalizedString("GOOGLE_DRIVE_LOGIN_FAILED_TEXT"))
+            }
+            .alert(NSLocalizedString("SYNC_FAILED"), isPresented: $showDriveSyncFailAlert) {
+                Button(NSLocalizedString("OK"), role: .cancel) {}
+            } message: {
+                Text(NSLocalizedString("GOOGLE_DRIVE_SYNC_FAILED_TEXT"))
+            }
+            .task {
+                await refreshGoogleDriveState()
+            }
         }
     }
 
@@ -86,5 +123,144 @@ struct AutomaticBackupsView: View {
                 value: .toggle(.init())
             )
         )
+    }
+}
+
+// MARK: - Google Drive
+extension AutomaticBackupsView {
+    @ViewBuilder
+    var googleDriveSection: some View {
+        // still shown while signed in with backups off, so access can be revoked
+        if GoogleDriveClient.isConfigured && (enabled.value || driveSignedIn) {
+            Section {
+                if driveSignedIn {
+                    if let driveAccount {
+                        HStack {
+                            Text(NSLocalizedString("ACCOUNT"))
+                            Spacer()
+                            Text(driveAccount)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                        }
+                    }
+
+                    toggle(key: GoogleDriveClient.enabledKey, title: NSLocalizedString("UPLOAD_BACKUPS"))
+
+                    if driveUploadEnabled.value {
+                        Button {
+                            syncToGoogleDrive()
+                        } label: {
+                            HStack {
+                                Text(NSLocalizedString("SYNC_NOW"))
+                                Spacer()
+                                if driveSyncing {
+                                    ProgressView()
+                                        .progressViewStyle(.circular)
+                                }
+                            }
+                        }
+                        .disabled(driveSyncing)
+                    }
+
+                    Button(role: .destructive) {
+                        Task {
+                            await GoogleDriveClient.shared.signOut()
+                            await BackupManager.shared.scheduleAutoBackup()
+                            await refreshGoogleDriveState()
+                        }
+                    } label: {
+                        Text(NSLocalizedString("LOGOUT"))
+                    }
+                } else {
+                    Button {
+                        signInToGoogleDrive()
+                    } label: {
+                        HStack {
+                            Text(NSLocalizedString("LOGIN"))
+                            Spacer()
+                            if driveLoading {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                            }
+                        }
+                    }
+                    .disabled(driveLoading)
+                }
+            } header: {
+                Text(NSLocalizedString("GOOGLE_DRIVE"))
+            } footer: {
+                if driveSignedIn && driveLastUpload > 0 {
+                    Text(String(
+                        format: NSLocalizedString("LAST_UPLOADED_%@"),
+                        Date(timeIntervalSince1970: driveLastUpload).formatted(.relative(presentation: .named))
+                    ))
+                } else {
+                    Text(String(format: NSLocalizedString("GOOGLE_DRIVE_INFO_%@"), GoogleDriveClient.folderName))
+                }
+            }
+        }
+    }
+
+    private func refreshGoogleDriveState() async {
+        driveSignedIn = await GoogleDriveClient.shared.isSignedIn
+        driveAccount = await GoogleDriveClient.shared.account
+        driveLastUpload = UserDefaults.standard.double(forKey: GoogleDriveClient.lastUploadKey)
+    }
+
+    private func syncToGoogleDrive() {
+        driveSyncing = true
+        Task {
+            defer { driveSyncing = false }
+            let success = await BackupManager.shared.syncToGoogleDrive()
+            if !success {
+                showDriveSyncFailAlert = true
+            }
+            await refreshGoogleDriveState()
+        }
+    }
+
+    private func signInToGoogleDrive() {
+        // set before starting, so a second tap can't overwrite the pkce verifier mid-flow
+        driveLoading = true
+        Task {
+            guard let url = await GoogleDriveClient.shared.authenticationUrl() else {
+                driveLoading = false
+                return
+            }
+            let session = ASWebAuthenticationSession(
+                url: url,
+                callbackURLScheme: GoogleDriveClient.callbackScheme
+            ) { callbackUrl, error in
+                Task { @MainActor in
+                    defer { driveLoading = false }
+
+                    if let error {
+                        // the user cancelling isn't worth logging
+                        if (error as? ASWebAuthenticationSessionError)?.code != .canceledLogin {
+                            LogManager.logger.error("Google Drive authentication error: \(error.localizedDescription)")
+                        }
+                        return
+                    }
+                    guard let callbackUrl else { return }
+
+                    do {
+                        try await GoogleDriveClient.shared.handleAuthenticationCallback(url: callbackUrl)
+                        // uploading is the point of signing in, so turn it on
+                        UserDefaults.standard.set(true, forKey: GoogleDriveClient.enabledKey)
+                        await BackupManager.shared.scheduleAutoBackup()
+                    } catch {
+                        LogManager.logger.error("Google Drive authentication error: \(error)")
+                        showDriveLoginFailAlert = true
+                    }
+                    await refreshGoogleDriveState()
+                }
+            }
+            session.presentationContextProvider = Self.loginShimController
+            if !session.start() {
+                LogManager.logger.error("Could not start the Google Drive login session")
+                driveLoading = false
+            }
+        }
     }
 }

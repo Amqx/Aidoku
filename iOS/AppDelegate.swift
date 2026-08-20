@@ -200,6 +200,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 "AutomaticBackups.settings": true,
                 "AutomaticBackups.sourceLists": true,
                 "AutomaticBackups.sensitiveSettings": false,
+                "AutomaticBackups.googleDrive.enabled": false,
 
                 "Library.downloadOnlyOnWifi": false,
                 "Library.deleteDownloadAfterReading": false,

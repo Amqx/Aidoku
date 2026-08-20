@@ -375,6 +375,8 @@
 		FB716E0B283FF85400F1BB5D /* UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB716E0A283FF85400F1BB5D /* UIView.swift */; };
 		FB72500F27CAAC6F0037F1C9 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */; };
 		FB72501027CAAC6F0037F1C9 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */; };
+		217EA9A84DFF45759FFF59D7 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
+		F1C1DB0BBF5F4909AB377058 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
 		FB72501327CAAC9F0037F1C9 /* Backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501227CAAC9F0037F1C9 /* Backup.swift */; };
 		FB72501427CAAC9F0037F1C9 /* Backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501227CAAC9F0037F1C9 /* Backup.swift */; };
 		FB72501627CAACAB0037F1C9 /* BackupManga.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501527CAACAB0037F1C9 /* BackupManga.swift */; };
@@ -936,6 +938,7 @@
 		FB716E08283F2E9D00F1BB5D /* CategorySelectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategorySelectViewController.swift; sourceTree = "<group>"; };
 		FB716E0A283FF85400F1BB5D /* UIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIView.swift; sourceTree = "<group>"; };
 		FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleDriveClient.swift; sourceTree = "<group>"; };
 		FB72501227CAAC9F0037F1C9 /* Backup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backup.swift; sourceTree = "<group>"; };
 		FB72501527CAACAB0037F1C9 /* BackupManga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManga.swift; sourceTree = "<group>"; };
 		FB72501827CAACB60037F1C9 /* BackupLibraryManga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupLibraryManga.swift; sourceTree = "<group>"; };
@@ -2020,6 +2023,7 @@
 			children = (
 				FB72501127CAAC860037F1C9 /* Models */,
 				FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */,
+				5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */,
 				FBB1970A2FB1000A00AB1970 /* BinaryPlistScanner.swift */,
 			);
 			path = Backup;
@@ -3135,6 +3139,7 @@
 				FB79841D2E0DD183000761A9 /* TapZone.swift in Sources */,
 				FB58C6B22999B44D00A6F49F /* WebViewViewController.swift in Sources */,
 				FB72500F27CAAC6F0037F1C9 /* BackupManager.swift in Sources */,
+				217EA9A84DFF45759FFF59D7 /* GoogleDriveClient.swift in Sources */,
 				FB31647A2FFCD16B004037C2 /* SuwayomiModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -3254,6 +3259,7 @@
 				FB716DFD283DA2D400F1BB5D /* Logger.swift in Sources */,
 				04B48CFB2CD6838C00F719D0 /* ShikimoriApi.swift in Sources */,
 				FB72501027CAAC6F0037F1C9 /* BackupManager.swift in Sources */,
+				F1C1DB0BBF5F4909AB377058 /* GoogleDriveClient.swift in Sources */,
 				4875B8262BA6F2C3001E39CA /* MangaUpdateManager.swift in Sources */,
 				FB82A5C72DF874D500366BC8 /* LocalFileDataManager.swift in Sources */,
 				FB28CF4728090A2200BC7663 /* WasmDefaults.swift in Sources */,

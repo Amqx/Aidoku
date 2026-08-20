@@ -24,10 +24,12 @@ actor BackupManager {
     private static let backupTaskIdentifier = (Bundle.main.bundleIdentifier ?? "") + ".backup"
     private static let maxAutoBackups = 4
 
-    private static let excludedSettings: Set<String> = [
+    private static let excludedSettings: Set<String> = Set([
         "Browse.sourceLists", // stored separately
-        "General.icloudSync"
-    ]
+        "General.icloudSync",
+        // google drive upload state is meaningless without the tokens, which are never exported
+        BackupManager.pendingUploadsKey
+    ] + GoogleDriveClient.excludedSettingsKeys)
     static let excludedSettingsPrefixes = [
         "Flag",
         "Data"
@@ -49,24 +51,29 @@ actor BackupManager {
         "Dictionary"
     ]
 
-    func save(backup: Backup, url: URL? = nil) {
+    // whether a google drive upload is currently in progress
+    private var isUploadingToDrive = false
+
+    @discardableResult
+    func save(backup: Backup, url: URL? = nil) -> URL? {
         Self.directory.createDirectory()
         let encoder = PropertyListEncoder()
         encoder.outputFormat = .binary
-        if let plist = try? encoder.encode(backup) {
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
-            if let url = url {
-                try? plist.write(to: url)
-            } else {
-                let path = Self.directory.appendingPathComponent("aidoku_\(dateFormatter.string(from: backup.date)).aib")
-                try? plist.write(to: path)
-            }
-            NotificationCenter.default.post(name: Notification.Name("updateBackupList"), object: nil)
+        guard let plist = try? encoder.encode(backup) else { return nil }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        let path = if let url {
+            url
+        } else {
+            Self.directory.appendingPathComponent("aidoku_\(dateFormatter.string(from: backup.date)).aib")
         }
+        guard (try? plist.write(to: path)) != nil else { return nil }
+        NotificationCenter.default.post(name: Notification.Name("updateBackupList"), object: nil)
+        return path
     }
 
-    func saveNewBackup(name: String = "", options: BackupOptions) async {
+    @discardableResult
+    func saveNewBackup(name: String = "", options: BackupOptions) async -> URL? {
         save(backup: await createBackup(name: name, options: options))
     }
 
@@ -613,10 +620,15 @@ extension BackupManager {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.backupTaskIdentifier, using: nil) { @Sendable [weak self] task in
             guard let self, let task = task as? BGProcessingTask else { return }
 
-            Task { @Sendable in
+            let backupTask = Task { @Sendable in
                 await self.createAutoBackup()
 
-                task.setTaskCompleted(success: true)
+                task.setTaskCompleted(success: !Task.isCancelled)
+            }
+
+            // uploads can run long, so stop them rather than letting the task be killed outright
+            task.expirationHandler = {
+                backupTask.cancel()
             }
         }
 #endif
@@ -647,12 +659,19 @@ extension BackupManager {
                 await createAutoBackup()
             }
         } else {
+            // retry any uploads that failed since the last backup, unless we're being shut down
+            if !Task.isCancelled {
+                Task {
+                    await uploadToGoogleDrive(newBackups: [])
+                }
+            }
+
 #if !os(macOS) && !targetEnvironment(simulator)
             // schedule task for the future
             let request = BGProcessingTaskRequest(identifier: Self.backupTaskIdentifier)
             request.earliestBeginDate = nextUpdateTime
             request.requiresExternalPower = false
-            request.requiresNetworkConnectivity = false
+            request.requiresNetworkConnectivity = UserDefaults.standard.bool(forKey: GoogleDriveClient.enabledKey)
 
             Task {
                 do {
@@ -679,7 +698,7 @@ extension BackupManager {
         let sourceLists = UserDefaults.standard.bool(forKey: "AutomaticBackups.sourceLists")
         let sensitiveSettings = UserDefaults.standard.bool(forKey: "AutomaticBackups.sensitiveSettings")
 
-        await self.saveNewBackup(
+        let backupUrl = await self.saveNewBackup(
             options: .init(
                 automatic: true,
                 libraryEntries: libraryEntries,
@@ -698,6 +717,8 @@ extension BackupManager {
         // update last auto backup time
         UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: "AutomaticBackups.lastBackup")
 
+        // upload before cleaning up, so a backup can't be deleted locally before it's uploaded
+        await uploadToGoogleDrive(newBackups: [backupUrl].compactMap { $0 })
         cleanUpAutoBackups()
         scheduleAutoBackup() // schedule the next one
     }
@@ -721,5 +742,99 @@ extension BackupManager {
                 break
             }
         }
+    }
+}
+
+// MARK: Google Drive Uploads
+extension BackupManager {
+    private static let pendingUploadsKey = "AutomaticBackups.googleDrive.pendingUploads"
+
+    /// Uploads every automatic backup that isn't in Google Drive yet.
+    ///
+    /// Returns false if any of them couldn't be uploaded.
+    @discardableResult
+    func syncToGoogleDrive() async -> Bool {
+        // oldest first, since drive only keeps the same number of backups as the local rotation
+        let automaticBackups = Self.backupUrls
+            .filter { BackupInfo.load(from: $0)?.automatic ?? false }
+            .reversed()
+        return await uploadToGoogleDrive(newBackups: Array(automaticBackups))
+    }
+
+    /// Uploads new automatic backups to Google Drive, along with any previously failed uploads.
+    ///
+    /// Backups that fail to upload are stored and retried the next time this runs. Returns false
+    /// if any of them couldn't be uploaded.
+    @discardableResult
+    func uploadToGoogleDrive(newBackups: [URL]) async -> Bool {
+        var seen = Set<String>()
+        let pending = ((UserDefaults.standard.stringArray(forKey: Self.pendingUploadsKey) ?? [])
+            + newBackups.map(\.lastPathComponent))
+            .filter { seen.insert($0).inserted }
+
+        // store the queue before uploading anything, so nothing is lost if we're killed mid-upload
+        UserDefaults.standard.set(pending, forKey: Self.pendingUploadsKey)
+
+        guard
+            UserDefaults.standard.bool(forKey: GoogleDriveClient.enabledKey),
+            await GoogleDriveClient.shared.isSignedIn
+        else {
+            // don't hold on to backups we're never going to upload
+            UserDefaults.standard.removeObject(forKey: Self.pendingUploadsKey)
+            return true
+        }
+        guard !pending.isEmpty else { return true }
+
+        // this suspends on network requests, so it can otherwise overlap with itself and
+        // upload the same backup twice
+        guard !isUploadingToDrive else { return true }
+        isUploadingToDrive = true
+        defer { isUploadingToDrive = false }
+
+        var failed: [String] = []
+        var uploaded = false
+
+        // oldest first, and only the ones we still have locally
+        for fileName in pending {
+            guard !Task.isCancelled else {
+                // out of time, leave the rest for the next run
+                failed.append(fileName)
+                continue
+            }
+            let url = Self.directory.appendingPathComponent(fileName)
+            guard url.exists else {
+                LogManager.logger.warn("Automatic backup \(fileName) was removed before it could be uploaded")
+                continue
+            }
+            do {
+                try await GoogleDriveClient.shared.upload(backupAt: url)
+                uploaded = true
+            } catch {
+                LogManager.logger.error("Could not upload backup to Google Drive: \(error)")
+                failed.append(fileName)
+            }
+        }
+
+        // another run can have queued backups while we were uploading, so don't drop those
+        let queuedSinceStart = (UserDefaults.standard.stringArray(forKey: Self.pendingUploadsKey) ?? [])
+            .filter { !pending.contains($0) }
+        let remaining = failed + queuedSinceStart
+        if remaining.isEmpty {
+            UserDefaults.standard.removeObject(forKey: Self.pendingUploadsKey)
+        } else {
+            UserDefaults.standard.set(remaining, forKey: Self.pendingUploadsKey)
+        }
+
+        guard uploaded, !Task.isCancelled else { return failed.isEmpty }
+
+        UserDefaults.standard.set(Date.now.timeIntervalSince1970, forKey: GoogleDriveClient.lastUploadKey)
+
+        do {
+            try await GoogleDriveClient.shared.prune(keeping: Self.maxAutoBackups)
+        } catch {
+            LogManager.logger.error("Could not clean up Google Drive backups: \(error)")
+        }
+
+        return failed.isEmpty
     }
 }
