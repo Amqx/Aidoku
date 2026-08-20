@@ -617,6 +617,16 @@
 		FBFF58912E7F2642009367B7 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58902E7F2641009367B7 /* Settings.swift */; };
 		FBFF58932E7F2BF5009367B7 /* SettingView+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58922E7F2BEF009367B7 /* SettingView+Environment.swift */; };
 		FBFF58952E807282009367B7 /* DoneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58942E807280009367B7 /* DoneButton.swift */; };
+		FBFA033F3008DF610008B4B6 /* SettingsValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033C3008DF610008B4B6 /* SettingsValue.swift */; };
+		FBFA03403008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */; };
+		FBFA03413008DF610008B4B6 /* SettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033B3008DF610008B4B6 /* SettingsKey.swift */; };
+		FBFA03423008DF610008B4B6 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033A3008DF610008B4B6 /* AppSettings.swift */; };
+		FBFA03433008DF610008B4B6 /* SettingsValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033C3008DF610008B4B6 /* SettingsValue.swift */; };
+		FBFA03443008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */; };
+		FBFA03453008DF610008B4B6 /* SettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033B3008DF610008B4B6 /* SettingsKey.swift */; };
+		FBFA03463008DF610008B4B6 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033A3008DF610008B4B6 /* AppSettings.swift */; };
+		FB7D99CF303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
+		FB7D99D0303452F5005C7583 /* FlagSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7D99CE303452F3005C7583 /* FlagSettings.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1118,6 +1128,11 @@
 		FBFF58902E7F2641009367B7 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		FBFF58922E7F2BEF009367B7 /* SettingView+Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingView+Environment.swift"; sourceTree = "<group>"; };
 		FBFF58942E807280009367B7 /* DoneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneButton.swift; sourceTree = "<group>"; };
+		FBFA033A3008DF610008B4B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		FBFA033B3008DF610008B4B6 /* SettingsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsKey.swift; sourceTree = "<group>"; };
+		FBFA033C3008DF610008B4B6 /* SettingsValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsValue.swift; sourceTree = "<group>"; };
+		FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsValue+Extensions.swift"; sourceTree = "<group>"; };
+		FB7D99CE303452F3005C7583 /* FlagSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlagSettings.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1428,6 +1443,7 @@
 				FB716DE8283D5F2000F1BB5D /* Logging */,
 				FBD6A40128525C77007116C9 /* Localization */,
 				FB16E6262DF4D85500E09ED5 /* Utilities */,
+				FBFA033E3008DF610008B4B6 /* Settings */,
 				FB1B4830277CE1920056D02C /* Assets.xcassets */,
 				FB1DD89C2EF1A6BC0007FC78 /* AppIcon.icon */,
 				FB1B482B277CE18D0056D02C /* Aidoku.xcdatamodeld */,
@@ -2423,6 +2439,26 @@
 			path = Downloads;
 			sourceTree = "<group>";
 		};
+		FB6F3AA230147D9300CB64C4 /* AppSettings */ = {
+			isa = PBXGroup;
+			children = (
+				FBFA033A3008DF610008B4B6 /* AppSettings.swift */,
+				FB7D99CE303452F3005C7583 /* FlagSettings.swift */,
+			);
+			path = AppSettings;
+			sourceTree = "<group>";
+		};
+		FBFA033E3008DF610008B4B6 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				FB6F3AA230147D9300CB64C4 /* AppSettings */,
+				FBFA033B3008DF610008B4B6 /* SettingsKey.swift */,
+				FBFA033C3008DF610008B4B6 /* SettingsValue.swift */,
+				FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -2650,6 +2686,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBFA03433008DF610008B4B6 /* SettingsValue.swift in Sources */,
+				FBFA03443008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */,
+				FBFA03453008DF610008B4B6 /* SettingsKey.swift in Sources */,
+				FBFA03463008DF610008B4B6 /* AppSettings.swift in Sources */,
+				FB7D99D0303452F5005C7583 /* FlagSettings.swift in Sources */,
 				FB4B0AEE285D2EE30066A13B /* MyAnimeListModels.swift in Sources */,
 				FB8E48D52DBFCEFB002A3621 /* SourceHomeContentView.swift in Sources */,
 				FBF9259D2F4DFB810049CB43 /* MangaBakaModels.swift in Sources */,
@@ -3076,6 +3117,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBFA033F3008DF610008B4B6 /* SettingsValue.swift in Sources */,
+				FBFA03403008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */,
+				FBFA03413008DF610008B4B6 /* SettingsKey.swift in Sources */,
+				FBFA03423008DF610008B4B6 /* AppSettings.swift in Sources */,
+				FB7D99CF303452F5005C7583 /* FlagSettings.swift in Sources */,
 				FBF059B62EF7013600907B0E /* InsightsData.swift in Sources */,
 				FB58C6B42999B5BC00A6F49F /* CoreDataManager+Source.swift in Sources */,
 				FB3164792FFCD16B004037C2 /* SuwayomiModels.swift in Sources */,

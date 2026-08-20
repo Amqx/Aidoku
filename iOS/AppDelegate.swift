@@ -208,6 +208,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 "Downloads.background": true
             ]
         )
+        AppSettings.registerDefaults()
 
         // PlayCover fix: eagerly initialize the Core Data stack on the main thread
         // before any background migration task touches it. The `lazy var container`
