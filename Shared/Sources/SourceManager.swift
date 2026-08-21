@@ -378,7 +378,7 @@ extension SourceManager {
         }
     }
 
-    func remove(source: AidokuRunner.Source) {
+    func remove(source: AidokuRunner.Source, skipUpdateNotification: Bool = false) {
         removeSettings(from: source)
         if let url = source.url {
             try? FileManager.default.removeItem(at: url)
@@ -397,7 +397,9 @@ extension SourceManager {
                 try? context.save()
             }
             NotificationCenter.default.post(name: .sourceUnloaded, object: source.key)
-            NotificationCenter.default.post(name: .updateSourceList, object: nil)
+            if !skipUpdateNotification {
+                NotificationCenter.default.post(name: .updateSourceList, object: nil)
+            }
         }
     }
 
