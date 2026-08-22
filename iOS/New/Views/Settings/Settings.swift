@@ -337,7 +337,6 @@ extension Settings {
                 title: NSLocalizedString("READING_MODE"),
                 value: .select(.init(
                     values: [
-                        "default",
                         "auto",
                         "rtl",
                         "ltr",
@@ -346,7 +345,6 @@ extension Settings {
                         "continuous"
                     ],
                     titles: [
-                        NSLocalizedString("DEFAULT"),
                         NSLocalizedString("AUTOMATIC"),
                         NSLocalizedString("RTL"),
                         NSLocalizedString("LTR"),
