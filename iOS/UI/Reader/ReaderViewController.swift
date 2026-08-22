@@ -436,13 +436,9 @@ extension ReaderViewController {
         let currentPage = effectiveCurrentPage
         let chapter = chapter ?? self.chapter
 
-        let sourceId = manga.sourceKey
-        let mangaId = manga.key
-        let chapterId = chapter.key
+        let chapterId = ChapterIdentifier(sourceKey: manga.sourceKey, mangaKey: manga.key, chapterKey: chapter.key)
         let (completed, progress) = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
             CoreDataManager.shared.getProgress(
-                sourceId: sourceId,
-                mangaId: mangaId,
                 chapterId: chapterId,
                 context: context
             )
@@ -455,7 +451,7 @@ extension ReaderViewController {
         }
 
         await HistoryManager.shared.setProgress(
-            chapter: chapter.toOld(sourceId: sourceId, mangaId: mangaId),
+            chapter: chapter.toOld(mangaId: manga.identifier),
             progress: currentPage,
             totalPages: totalPages,
             scrollPosition: currentPosition,
@@ -470,7 +466,7 @@ extension ReaderViewController {
         if pagesRead > 0 && sessionLastInteraction != nil {
             let chapter = chapter ?? self.chapter
             await HistoryManager.shared.addSession(
-                chapterIdentifier: .init(sourceKey: manga.sourceKey, mangaKey: manga.key, chapterKey: chapter.key),
+                chapterId: .init(sourceKey: manga.sourceKey, mangaKey: manga.key, chapterKey: chapter.key),
                 data: .init(startDate: sessionStartDate, endDate: .now, pagesRead: pagesRead)
             )
         }
@@ -494,9 +490,11 @@ extension ReaderViewController {
         }
 
         let (completed, startPage) = CoreDataManager.shared.getProgress(
-            sourceId: source?.key ?? manga.sourceKey,
-            mangaId: manga.key,
-            chapterId: chapter.key
+            chapterId: .init(
+                sourceKey: source?.key ?? manga.sourceKey,
+                mangaKey: manga.key,
+                chapterKey: chapter.key
+            )
         )
         if !completed, let startPage {
             currentPage = startPage
@@ -612,15 +610,9 @@ extension ReaderViewController {
                 // use given default reading mode
                 if let defaultReadingMode {
                     readingMode = defaultReadingMode
-                } else if CoreDataManager.shared.hasManga(
-                    sourceId: source?.key ?? manga.sourceKey,
-                    mangaId: manga.key
-                ) {
+                } else if CoreDataManager.shared.hasManga(mangaId: manga.identifier) {
                     // fall back to stored manga viewer
-                    let sourceMode = CoreDataManager.shared.getMangaSourceReadingMode(
-                        sourceId: source?.key ?? manga.sourceKey,
-                        mangaId: manga.key
-                    )
+                    let sourceMode = CoreDataManager.shared.getMangaSourceReadingMode(mangaId: manga.identifier)
                     if let mode = ReadingMode(rawValue: sourceMode) {
                         readingMode = mode
                     } else {
@@ -969,8 +961,7 @@ extension ReaderViewController: ReaderHoldingDelegate {
 
         Task { [chaptersToMark] in
             await HistoryManager.shared.addHistory(
-                sourceId: manga.sourceKey,
-                mangaId: manga.key,
+                mangaId: manga.identifier,
                 chapters: chaptersToMark
             )
         }
