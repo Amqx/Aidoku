@@ -1318,6 +1318,11 @@ extension SettingView {
             }
             stringListBinding = newValues
         }
+        .onMove { source, destination in
+            var values = stringListBinding
+            values.move(fromOffsets: source, toOffset: destination)
+            stringListBinding = values
+        }
         Group {
             if value.inline ?? false {
                 items
@@ -1337,12 +1342,11 @@ extension SettingView {
                     }
                     .navigationTitle(setting.title)
                     .toolbar {
-#if !os(macOS)
-                        let placement = ToolbarItemPlacement.topBarTrailing
-#else
-                        let placement = ToolbarItemPlacement.primaryAction
-#endif
-                        ToolbarItem(placement: placement) {
+                        ToolbarItem(placement: .topBarLeading) {
+                            EditButton()
+                        }
+
+                        ToolbarItem(placement: .topBarTrailing) {
                             Button {
                                 showListAddPrompt(value: value)
                             } label: {
