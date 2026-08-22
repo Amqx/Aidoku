@@ -5,10 +5,10 @@
 //  Created by Skitty on 8/14/22.
 //
 
-import UIKit
+import AidokuRunner
 import SafariServices
 import SwiftUI
-import AidokuRunner
+import UIKit
 
 class ReaderViewController: BaseObservingViewController {
     enum Reader {
@@ -58,6 +58,25 @@ class ReaderViewController: BaseObservingViewController {
     private let doubleSqueezeInterval: TimeInterval = 0.3
     private let longSqueezeThreshold: TimeInterval = 0.5
 
+    private lazy var autoScrollButton: UIButton = {
+        var configuration = UIButton.Configuration.filled()
+        if #available(iOS 26.0, *) {
+            configuration = .glass()
+        } else {
+            configuration = .filled()
+            configuration.baseBackgroundColor = .secondarySystemBackground
+            configuration.baseForegroundColor = .label
+        }
+        configuration.cornerStyle = .capsule
+        configuration.image = UIImage(systemName: "play.fill")
+        configuration.contentInsets = .init(top: 10, leading: 10, bottom: 10, trailing: 10)
+
+        let button = UIButton(configuration: configuration)
+        button.addTarget(self, action: #selector(toggleAutoScroll), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.isHidden = true
+        return button
+    }()
     private lazy var descriptionButtonController: UIHostingController<ReaderPageDescriptionButtonView> = {
         let buttonView = ReaderPageDescriptionButtonView(source: source, pages: [])
         let hostingController = UIHostingController(rootView: buttonView)
@@ -67,21 +86,22 @@ class ReaderViewController: BaseObservingViewController {
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
         return hostingController
     }()
-    private lazy var pageDescriptionButtonBottomConstraint: NSLayoutConstraint =
-        descriptionButtonController.view.bottomAnchor.constraint(
-            equalTo: {
-                if #available(iOS 16.0, *) {
-                    view.bottomAnchor
-                } else {
-                    view.safeAreaLayoutGuide.bottomAnchor
-                }
-            }()
+    private lazy var descriptionTrailingConstraint =
+        descriptionButtonController.view.trailingAnchor.constraint(
+            equalTo: view.safeAreaLayoutGuide.trailingAnchor,
+            constant: -16
+        )
+    private lazy var descriptionTrailingToAutoScrollConstraint =
+        descriptionButtonController.view.trailingAnchor.constraint(
+            equalTo: autoScrollButton.leadingAnchor,
+            constant: -16
         )
 
     // fake zoom gesture so that the bar toggle gesture doesn't conflict with zooming
     private lazy var fakeZoomTapGesture: UITapGestureRecognizer = {
         let doubleTap = UITapGestureRecognizer(target: self, action: nil)
         doubleTap.numberOfTapsRequired = 2
+        doubleTap.delegate = self
         return doubleTap
     }()
 
@@ -89,6 +109,7 @@ class ReaderViewController: BaseObservingViewController {
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tap.numberOfTapsRequired = 1
         tap.require(toFail: fakeZoomTapGesture)
+        tap.delegate = self
         return tap
     }()
 
@@ -193,6 +214,7 @@ class ReaderViewController: BaseObservingViewController {
         }
 
         add(child: descriptionButtonController)
+        view.addSubview(autoScrollButton)
 
         toolbarItems = [toolbarButtonItemView]
         navigationController?.isToolbarHidden = false
@@ -240,9 +262,13 @@ class ReaderViewController: BaseObservingViewController {
             activityIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             activityIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
 
-            descriptionButtonController.view.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
-            pageDescriptionButtonBottomConstraint
+            descriptionButtonController.view.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+
+            autoScrollButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            autoScrollButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor)
         ])
+
+        updateAutoScrollButton()
     }
 
     override func observe() {
@@ -307,6 +333,9 @@ class ReaderViewController: BaseObservingViewController {
                 }
             }
         }
+        addObserver(forName: "Reader.autoScroll") { [weak self] _ in
+            self?.updateAutoScrollButton()
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -325,10 +354,16 @@ class ReaderViewController: BaseObservingViewController {
         navigationController?.toolbar.alpha = 1
 
         disableSwipeGestures()
+        // resume auto scroll if it was paused when presenting a sheet
+        if let reader = reader as? ReaderWebtoonViewController {
+            reader.resumeAutoScroll()
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+
+        (reader as? ReaderWebtoonViewController)?.stopAutoScroll()
 
         if !chaptersToRemoveDownload.isEmpty {
             Task {
@@ -356,7 +391,9 @@ class ReaderViewController: BaseObservingViewController {
             }
         }
     }
+}
 
+extension ReaderViewController {
     func disableSwipeGestures() {
         let isVerticalReader = reader is ReaderWebtoonViewController || readingMode == .vertical
 
@@ -500,6 +537,8 @@ class ReaderViewController: BaseObservingViewController {
     }
 
     @objc func openReaderSettings() {
+        (reader as? ReaderWebtoonViewController)?.stopAutoScroll()
+
         let currentReader: Reader
         switch reader {
             case is ReaderTextViewController, is ReaderPagedTextViewController:
@@ -519,10 +558,13 @@ class ReaderViewController: BaseObservingViewController {
 
     @objc func openWebView() {
         guard let url = chapter.url, url.scheme == "http" || url.scheme == "https" else { return }
+        (reader as? ReaderWebtoonViewController)?.stopAutoScroll()
         present(SFSafariViewController(url: url), animated: true)
     }
 
     @objc func openChapterList() {
+        (reader as? ReaderWebtoonViewController)?.stopAutoScroll()
+
         var view = ReaderChapterListView(
             chapterList: chapterList,
             chapter: chapter
@@ -534,8 +576,7 @@ class ReaderViewController: BaseObservingViewController {
                 self.loadCurrentChapter()
             }
         }
-        let vc = UIHostingController(rootView: view)
-        present(vc, animated: true)
+        present(UIHostingController(rootView: view), animated: true)
     }
 
     @objc func close() {
@@ -601,6 +642,34 @@ extension ReaderViewController {
         }
     }
 
+    @objc private func toggleAutoScroll() {
+        guard let webtoonReader = reader as? ReaderWebtoonViewController else { return }
+        webtoonReader.toggleAutoScroll()
+    }
+
+    private func updateAutoScrollButton() {
+        let webtoonReader = reader as? ReaderWebtoonViewController
+        let visible = webtoonReader != nil && UserDefaults.standard.bool(forKey: "Reader.autoScroll")
+
+        if !visible {
+            webtoonReader?.stopAutoScroll()
+        }
+
+        webtoonReader?.onAutoScrollStateChange = { [weak self] _ in
+            self?.updateAutoScrollButtonIcon()
+        }
+
+        autoScrollButton.isHidden = !visible
+        descriptionTrailingConstraint.isActive = !visible
+        descriptionTrailingToAutoScrollConstraint.isActive = visible
+        updateAutoScrollButtonIcon()
+    }
+
+    private func updateAutoScrollButtonIcon() {
+        let isAutoScrolling = (reader as? ReaderWebtoonViewController)?.isAutoScrolling == true
+        autoScrollButton.configuration?.image = UIImage(systemName: isAutoScrolling ? "pause.fill" : "play.fill")
+    }
+
     func setReader(_ type: Reader) {
         let pageController: ReaderReaderDelegate?
         switch type {
@@ -645,12 +714,16 @@ extension ReaderViewController {
                 }
         }
         if let pageController {
+            if let webtoonReader = reader as? ReaderWebtoonViewController {
+                webtoonReader.stopAutoScroll()
+            }
             reader?.remove()
             pageController.delegate = self
             reader = pageController
             add(child: pageController, below: descriptionButtonController.view)
         }
         reader?.readingMode = readingMode
+        updateAutoScrollButton()
         disableSwipeGestures()
     }
 }
@@ -793,6 +866,7 @@ extension ReaderViewController: ReaderHoldingDelegate {
         guard let totalPages = toolbarView.totalPages else { return }
 
         updateDescriptionButton(pages: pages)
+        updateAutoScrollButton()
 
         sessionLastInteraction = Date.now
         for page in pages {
@@ -838,10 +912,12 @@ extension ReaderViewController: ReaderHoldingDelegate {
     }
 
     func setPages(_ pages: [Page]) {
-
         // If already in a text reader with text pages, just update toolbar - don't trigger any switches
-        if (reader is ReaderPagedTextViewController || reader is ReaderTextViewController)
-            && pages.allSatisfy({ $0.isTextPage }) && pages.count > 1 {
+        if
+            reader is ReaderPagedTextViewController || reader is ReaderTextViewController,
+            pages.allSatisfy({ $0.isTextPage }),
+            pages.count > 1
+        {
             self.pages = pages
             toolbarView.totalPages = pages.count
             activityIndicator.stopAnimating()
@@ -1074,7 +1150,6 @@ extension ReaderViewController {
                     navigationController.toolbar.isHidden = false
                 }
             }
-            self.pageDescriptionButtonBottomConstraint.constant = 0
             navigationController.navigationBar.isHidden = false
             UIView.setAnimationsEnabled(true)
             UIView.animate(withDuration: CATransaction.animationDuration()) {
@@ -1106,8 +1181,6 @@ extension ReaderViewController {
             self.setNeedsUpdateOfHomeIndicatorAutoHidden()
         } completion: { _ in
             NotificationCenter.default.post(name: .readerHidingBars, object: nil)
-
-            self.pageDescriptionButtonBottomConstraint.constant = 30
 
             UIView.animate(withDuration: CATransaction.animationDuration()) {
                 navigationController.navigationBar.alpha = 0
@@ -1148,6 +1221,24 @@ extension ReaderViewController: UIGestureRecognizerDelegate {
         guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return true }
         let velocity = pan.velocity(in: pan.view)
         return velocity.y > velocity.x && (abs(velocity.x) < 40 || abs(velocity.y) > abs(velocity.x) * 3)
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard
+            gestureRecognizer === barToggleTapGesture
+                || gestureRecognizer === fakeZoomTapGesture
+        else {
+            return true
+        }
+
+        var view: UIView? = touch.view
+        while let currentView = view {
+            if currentView is UIControl {
+                return false
+            }
+            view = currentView.superview
+        }
+        return true
     }
 }
 

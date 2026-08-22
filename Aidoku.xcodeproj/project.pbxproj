@@ -18,6 +18,7 @@
 		04B48CFE2CD6B3B000F719D0 /* ShikimoriQueries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B48CFD2CD6B3AD00F719D0 /* ShikimoriQueries.swift */; };
 		04B48CFF2CD6B3B000F719D0 /* ShikimoriQueries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B48CFD2CD6B3AD00F719D0 /* ShikimoriQueries.swift */; };
 		0C807DDD27D47C2D0042EE7B /* CircularProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C807DDC27D47C2D0042EE7B /* CircularProgressView.swift */; };
+		217EA9A84DFF45759FFF59D7 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
 		30EAB0012FC051B5000BFEDF /* CoverRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30EAB0002FC051B5000BFEDF /* CoverRecovery.swift */; };
 		37F3E66D2850F62100A944E0 /* Collection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F3E66C2850F62100A944E0 /* Collection.swift */; };
 		48177B8E2B75C40400AD41B4 /* MangaUpdatesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48177B8D2B75C40400AD41B4 /* MangaUpdatesView.swift */; };
@@ -40,6 +41,9 @@
 		7C63F0D92F48FD4B007D1811 /* ChapterTransitionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C63F0D42F48FD4B007D1811 /* ChapterTransitionViewController.swift */; };
 		7CF79D3D2F31E81300BF0800 /* ReaderPagedTextViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF79D392F31E81300BF0800 /* ReaderPagedTextViewController.swift */; };
 		7CF79D3E2F31E81300BF0800 /* TextPaginator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF79D3A2F31E81300BF0800 /* TextPaginator.swift */; };
+		831493AB7C82392E8CB6CF6A /* CoreDataManager+Indexes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */; };
+		A13D58D823154CB09F35A340 /* CoreDataManager+Indexes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */; };
+		F1C1DB0BBF5F4909AB377058 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
 		FB0051222FAF054D004B4A6F /* MigrateSelectSeriesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0051212FAF053F004B4A6F /* MigrateSelectSeriesView.swift */; };
 		FB0051262FAF0574004B4A6F /* MigrateResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0051252FAF056E004B4A6F /* MigrateResultsView.swift */; };
 		FB0051282FB7F926004B4A6F /* MigrateSingleSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0051272FB7F91E004B4A6F /* MigrateSingleSearchView.swift */; };
@@ -84,12 +88,10 @@
 		FB0CAA5428A68FDF0024561A /* LockedPageStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5328A68FDF0024561A /* LockedPageStackView.swift */; };
 		FB0CAA5628A6BF8A0024561A /* NSPersistentContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5528A6BF8A0024561A /* NSPersistentContainer.swift */; };
 		FB0CAA5828A83F020024561A /* CoreDataManager+Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5728A83F020024561A /* CoreDataManager+Chapter.swift */; };
-		A13D58D823154CB09F35A340 /* CoreDataManager+Indexes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */; };
 		FB0CAA5A28A93DD50024561A /* CoreDataManager+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5928A93DD50024561A /* CoreDataManager+History.swift */; };
 		FB0CAA5B28A998630024561A /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB90F6CB2899867D000C37E6 /* CoreDataManager.swift */; };
 		FB0CAA5C28A998650024561A /* CoreDataManager+Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA4F28A55BB80024561A /* CoreDataManager+Category.swift */; };
 		FB0CAA5D28A998670024561A /* CoreDataManager+Chapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5728A83F020024561A /* CoreDataManager+Chapter.swift */; };
-		831493AB7C82392E8CB6CF6A /* CoreDataManager+Indexes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */; };
 		FB0CAA5E28A998690024561A /* CoreDataManager+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA5928A93DD50024561A /* CoreDataManager+History.swift */; };
 		FB0CAA5F28A9986A0024561A /* CoreDataManager+LibraryManga.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA4D28A2B9F40024561A /* CoreDataManager+LibraryManga.swift */; };
 		FB0CAA6028A9986D0024561A /* CoreDataManager+Manga.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0CAA4B28A2AD480024561A /* CoreDataManager+Manga.swift */; };
@@ -377,8 +379,6 @@
 		FB716E0B283FF85400F1BB5D /* UIView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB716E0A283FF85400F1BB5D /* UIView.swift */; };
 		FB72500F27CAAC6F0037F1C9 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */; };
 		FB72501027CAAC6F0037F1C9 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */; };
-		217EA9A84DFF45759FFF59D7 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
-		F1C1DB0BBF5F4909AB377058 /* GoogleDriveClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */; };
 		FB72501327CAAC9F0037F1C9 /* Backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501227CAAC9F0037F1C9 /* Backup.swift */; };
 		FB72501427CAAC9F0037F1C9 /* Backup.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501227CAAC9F0037F1C9 /* Backup.swift */; };
 		FB72501627CAACAB0037F1C9 /* BackupManga.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB72501527CAACAB0037F1C9 /* BackupManga.swift */; };
@@ -615,14 +615,6 @@
 		FBF925B82F4F79750049CB43 /* LibraryCategorySelectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF925B72F4F79740049CB43 /* LibraryCategorySelectionHeader.swift */; };
 		FBF9DC0528205FCE0056FA9A /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF9DC0428205FCE0056FA9A /* DownloadManager.swift */; };
 		FBF9DC0628205FCE0056FA9A /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBF9DC0428205FCE0056FA9A /* DownloadManager.swift */; };
-		FBFA43AD2799DD110065A445 /* ReaderSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA43AC2799DD110065A445 /* ReaderSliderView.swift */; };
-		FBFDD40327838AB90055ED9F /* Sequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFDD40227838AB90055ED9F /* Sequence.swift */; };
-		FBFDD40427838AB90055ED9F /* Sequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFDD40227838AB90055ED9F /* Sequence.swift */; };
-		FBFDF5F82DF799180064F603 /* AidokuRunner in Frameworks */ = {isa = PBXBuildFile; productRef = FBFDF5F72DF799180064F603 /* AidokuRunner */; };
-		FBFDF5FA2DF799340064F603 /* AidokuRunner in Frameworks */ = {isa = PBXBuildFile; productRef = FBFDF5F92DF799340064F603 /* AidokuRunner */; };
-		FBFF58912E7F2642009367B7 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58902E7F2641009367B7 /* Settings.swift */; };
-		FBFF58932E7F2BF5009367B7 /* SettingView+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58922E7F2BEF009367B7 /* SettingView+Environment.swift */; };
-		FBFF58952E807282009367B7 /* DoneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58942E807280009367B7 /* DoneButton.swift */; };
 		FBFA033F3008DF610008B4B6 /* SettingsValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033C3008DF610008B4B6 /* SettingsValue.swift */; };
 		FBFA03403008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */; };
 		FBFA03413008DF610008B4B6 /* SettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033B3008DF610008B4B6 /* SettingsKey.swift */; };
@@ -631,6 +623,14 @@
 		FBFA03443008DF610008B4B6 /* SettingsValue+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */; };
 		FBFA03453008DF610008B4B6 /* SettingsKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033B3008DF610008B4B6 /* SettingsKey.swift */; };
 		FBFA03463008DF610008B4B6 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA033A3008DF610008B4B6 /* AppSettings.swift */; };
+		FBFA43AD2799DD110065A445 /* ReaderSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA43AC2799DD110065A445 /* ReaderSliderView.swift */; };
+		FBFDD40327838AB90055ED9F /* Sequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFDD40227838AB90055ED9F /* Sequence.swift */; };
+		FBFDD40427838AB90055ED9F /* Sequence.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFDD40227838AB90055ED9F /* Sequence.swift */; };
+		FBFDF5F82DF799180064F603 /* AidokuRunner in Frameworks */ = {isa = PBXBuildFile; productRef = FBFDF5F72DF799180064F603 /* AidokuRunner */; };
+		FBFDF5FA2DF799340064F603 /* AidokuRunner in Frameworks */ = {isa = PBXBuildFile; productRef = FBFDF5F92DF799340064F603 /* AidokuRunner */; };
+		FBFF58912E7F2642009367B7 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58902E7F2641009367B7 /* Settings.swift */; };
+		FBFF58932E7F2BF5009367B7 /* SettingView+Environment.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58922E7F2BEF009367B7 /* SettingView+Environment.swift */; };
+		FBFF58952E807282009367B7 /* DoneButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFF58942E807280009367B7 /* DoneButton.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -661,7 +661,9 @@
 		4875B8242BA6F2C3001E39CA /* MangaUpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MangaUpdateManager.swift; sourceTree = "<group>"; };
 		48E20A262B78420E00BFFED8 /* NavigationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationController.swift; sourceTree = "<group>"; };
 		56815D972FBC7078001486C8 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleDriveClient.swift; sourceTree = "<group>"; };
 		66C7E95A2ED77BB50026FD6C /* ImageProcessingSettingsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageProcessingSettingsKey.swift; sourceTree = "<group>"; };
+		6C0A45E0A5375BEF1A7D40AB /* 0.8.5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = 0.8.5.xcdatamodel; sourceTree = "<group>"; };
 		723D3AF82E0DC5A5003ED4CF /* DownloadedMangaInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadedMangaInfo.swift; sourceTree = "<group>"; };
 		723D3AFB2E0DC5C4003ED4CF /* DownloadsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadsView.swift; sourceTree = "<group>"; };
 		723D3AFC2E0DC5C4003ED4CF /* DownloadedMangaView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadedMangaView.swift; sourceTree = "<group>"; };
@@ -674,6 +676,7 @@
 		91D7BEF92DD7E48400898539 /* Aidoku-MACOS.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = "Aidoku-MACOS.xcconfig"; sourceTree = "<group>"; };
 		91D7BEFB2DD7E4BB00898539 /* Aidoku.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Aidoku.xcconfig; sourceTree = "<group>"; };
 		91D7BEFF2DD8881300898539 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+Indexes.swift"; sourceTree = "<group>"; };
 		FB0051212FAF053F004B4A6F /* MigrateSelectSeriesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrateSelectSeriesView.swift; sourceTree = "<group>"; };
 		FB0051252FAF056E004B4A6F /* MigrateResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrateResultsView.swift; sourceTree = "<group>"; };
 		FB0051272FB7F91E004B4A6F /* MigrateSingleSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MigrateSingleSearchView.swift; sourceTree = "<group>"; };
@@ -704,7 +707,6 @@
 		FB0AB8A22F51FD8D00AF1451 /* FilterGroupCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterGroupCreateView.swift; sourceTree = "<group>"; };
 		FB0AB8A42F52046F00AF1451 /* FilterGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterGroup.swift; sourceTree = "<group>"; };
 		FB0AB8B42F55D00100AF1451 /* 0.8.3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = 0.8.3.xcdatamodel; sourceTree = "<group>"; };
-		6C0A45E0A5375BEF1A7D40AB /* 0.8.5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = 0.8.5.xcdatamodel; sourceTree = "<group>"; };
 		FB0C088B280E4D1C00A7332B /* DeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLink.swift; sourceTree = "<group>"; };
 		FB0CAA4B28A2AD480024561A /* CoreDataManager+Manga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+Manga.swift"; sourceTree = "<group>"; };
 		FB0CAA4D28A2B9F40024561A /* CoreDataManager+LibraryManga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+LibraryManga.swift"; sourceTree = "<group>"; };
@@ -713,7 +715,6 @@
 		FB0CAA5328A68FDF0024561A /* LockedPageStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockedPageStackView.swift; sourceTree = "<group>"; };
 		FB0CAA5528A6BF8A0024561A /* NSPersistentContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSPersistentContainer.swift; sourceTree = "<group>"; };
 		FB0CAA5728A83F020024561A /* CoreDataManager+Chapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+Chapter.swift"; sourceTree = "<group>"; };
-		9C29273B60C046FEC60599C7 /* CoreDataManager+Indexes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+Indexes.swift"; sourceTree = "<group>"; };
 		FB0CAA5928A93DD50024561A /* CoreDataManager+History.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CoreDataManager+History.swift"; sourceTree = "<group>"; };
 		FB0CAA6428A9B5440024561A /* MangaManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MangaManager.swift; sourceTree = "<group>"; };
 		FB0CAA6928A9BB9C0024561A /* ReaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderViewController.swift; sourceTree = "<group>"; };
@@ -939,7 +940,6 @@
 		FB716E08283F2E9D00F1BB5D /* CategorySelectViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategorySelectViewController.swift; sourceTree = "<group>"; };
 		FB716E0A283FF85400F1BB5D /* UIView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIView.swift; sourceTree = "<group>"; };
 		FB72500E27CAAC6F0037F1C9 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
-		5C85F13379FF4EF69CBF7FBA /* GoogleDriveClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleDriveClient.swift; sourceTree = "<group>"; };
 		FB72501227CAAC9F0037F1C9 /* Backup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backup.swift; sourceTree = "<group>"; };
 		FB72501527CAACAB0037F1C9 /* BackupManga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManga.swift; sourceTree = "<group>"; };
 		FB72501827CAACB60037F1C9 /* BackupLibraryManga.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupLibraryManga.swift; sourceTree = "<group>"; };
@@ -1127,6 +1127,10 @@
 		FBF925B52F4F6FF10049CB43 /* FilterGroupsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterGroupsView.swift; sourceTree = "<group>"; };
 		FBF925B72F4F79740049CB43 /* LibraryCategorySelectionHeader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCategorySelectionHeader.swift; sourceTree = "<group>"; };
 		FBF9DC0428205FCE0056FA9A /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
+		FBFA033A3008DF610008B4B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		FBFA033B3008DF610008B4B6 /* SettingsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsKey.swift; sourceTree = "<group>"; };
+		FBFA033C3008DF610008B4B6 /* SettingsValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsValue.swift; sourceTree = "<group>"; };
+		FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsValue+Extensions.swift"; sourceTree = "<group>"; };
 		FBFA43AC2799DD110065A445 /* ReaderSliderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderSliderView.swift; sourceTree = "<group>"; };
 		FBFA43AE2799DD260065A445 /* ReaderInfoPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderInfoPageView.swift; sourceTree = "<group>"; };
 		FBFAC3BB2996B292004D8489 /* af */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = af; path = af.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1135,10 +1139,6 @@
 		FBFF58902E7F2641009367B7 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		FBFF58922E7F2BEF009367B7 /* SettingView+Environment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingView+Environment.swift"; sourceTree = "<group>"; };
 		FBFF58942E807280009367B7 /* DoneButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoneButton.swift; sourceTree = "<group>"; };
-		FBFA033A3008DF610008B4B6 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
-		FBFA033B3008DF610008B4B6 /* SettingsKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsKey.swift; sourceTree = "<group>"; };
-		FBFA033C3008DF610008B4B6 /* SettingsValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsValue.swift; sourceTree = "<group>"; };
-		FBFA033D3008DF610008B4B6 /* SettingsValue+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SettingsValue+Extensions.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -1996,6 +1996,15 @@
 			path = Utilities;
 			sourceTree = "<group>";
 		};
+		FB6F3AA230147D9300CB64C4 /* AppSettings */ = {
+			isa = PBXGroup;
+			children = (
+				FBFA033A3008DF610008B4B6 /* AppSettings.swift */,
+				FB7D99CE303452F3005C7583 /* FlagSettings.swift */,
+			);
+			path = AppSettings;
+			sourceTree = "<group>";
+		};
 		FB716DE8283D5F2000F1BB5D /* Logging */ = {
 			isa = PBXGroup;
 			children = (
@@ -2447,15 +2456,6 @@
 			path = Downloads;
 			sourceTree = "<group>";
 		};
-		FB6F3AA230147D9300CB64C4 /* AppSettings */ = {
-			isa = PBXGroup;
-			children = (
-				FBFA033A3008DF610008B4B6 /* AppSettings.swift */,
-				FB7D99CE303452F3005C7583 /* FlagSettings.swift */,
-			);
-			path = AppSettings;
-			sourceTree = "<group>";
-		};
 		FBFA033E3008DF610008B4B6 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
@@ -2670,24 +2670,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		FBED233627C3C4D70095D0C0 /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 12;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nif which swiftlint >/dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
-		};
 		FBA1D0C42F31A0C400C0MM17 /* Embed Git Commit Hash */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -2707,6 +2689,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "# embed the git commit hash into the built Info.plist\nHASH=$(git -C \"$SRCROOT\" rev-parse --short HEAD 2>/dev/null) || HASH=\"\"\n\nif [ -n \"$HASH\" ]; then\n  if ! git -C \"$SRCROOT\" diff --quiet HEAD 2>/dev/null; then\n    HASH=\"$HASH-dirty\"\n  fi\nelse\n  HASH=\"unknown\"\nfi\n\nPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\n/usr/libexec/PlistBuddy -c \"Set :GitCommitHash $HASH\" \"$PLIST\" 2>/dev/null \\\n  || /usr/libexec/PlistBuddy -c \"Add :GitCommitHash string $HASH\" \"$PLIST\"\n";
+		};
+		FBED233627C3C4D70095D0C0 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"$PATH:/opt/homebrew/bin\"\n\nif which swiftlint >/dev/null; then\n  swiftlint\nelse\n  echo \"warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -3700,7 +3700,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.ry-st.AidokuTests;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.ry-st.AidokuTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
@@ -3730,7 +3730,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.ry-st.AidokuTests;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.ry-st.AidokuTests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
