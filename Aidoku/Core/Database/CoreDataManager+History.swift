@@ -145,32 +145,6 @@ extension CoreDataManager {
         }
     }
 
-    /// Removes history linked to the given chapters
-    func removeHistory(chapters: [Chapter]) async {
-        await container.performBackgroundTask { context in
-            do {
-                // fetch once per manga instead of once per chapter
-                let groups = Dictionary(grouping: chapters) {
-                    MangaIdentifier(sourceKey: $0.sourceId, mangaKey: $0.mangaId)
-                }
-                for (key, chapters) in groups {
-                    let objects = self.getHistory(
-                        sourceId: key.sourceKey,
-                        mangaId: key.mangaKey,
-                        chapterIds: chapters.map { $0.id },
-                        context: context
-                    )
-                    for object in objects {
-                        context.delete(object)
-                    }
-                }
-                try context.save()
-            } catch {
-                LogManager.logger.error("CoreDataManager.removeHistory(chapters:): \(error.localizedDescription)")
-            }
-        }
-    }
-
     func removeHistory(chapterIds: [ChapterIdentifier]) async {
         await container.performBackgroundTask { context in
             do {
