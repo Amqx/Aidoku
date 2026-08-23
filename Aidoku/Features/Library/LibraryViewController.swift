@@ -1618,10 +1618,11 @@ extension LibraryViewController {
         undoManager.setActionName(actionName)
 
         let removedManga = mangaInfo.map {
-            let manga = CoreDataManager.shared.getManga(mangaId: $0.id)?.toManga()
-            let chapters = CoreDataManager.shared.getChapters(mangaId: $0.id).map { $0.toChapter() }
-            let trackItems = CoreDataManager.shared.getTracks(mangaId: $0.id).map { $0.toItem() }
-            let categories = CoreDataManager.shared.getCategories(mangaId: $0.id).compactMap { $0.title }
+            let context = CoreDataManager.shared.context
+            let manga = CoreDataManager.shared.getManga(mangaId: $0.id, context: context)?.toManga()
+            let chapters = CoreDataManager.shared.getChapters(mangaId: $0.id, context: context).map { $0.toChapter() }
+            let trackItems = CoreDataManager.shared.getTracks(mangaId: $0.id, context: context).map { $0.toItem() }
+            let categories = CoreDataManager.shared.getCategories(mangaId: $0.id, context: context).compactMap { $0.title }
             return (manga, chapters, trackItems, categories)
         }
 
@@ -1634,8 +1635,11 @@ extension LibraryViewController {
                 for (manga, chapters, trackItems, categories) in removedManga {
                     guard let manga = manga else { continue }
                     await MangaManager.shared.restoreToLibrary(
-                        manga: manga, chapters: chapters, trackItems: trackItems,
-                        categories: categories)
+                        manga: manga,
+                        chapters: chapters,
+                        trackItems: trackItems,
+                        categories: categories
+                    )
                 }
 
                 NotificationCenter.default.post(name: .updateLibrary, object: nil)
@@ -1646,7 +1650,6 @@ extension LibraryViewController {
             for manga in mangaInfo {
                 await viewModel.removeFromLibrary(manga: manga)
             }
-
             updateDataSource()
         }
     }
