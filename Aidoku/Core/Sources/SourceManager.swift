@@ -8,10 +8,7 @@
 import AidokuRunner
 import Foundation
 import ZIPFoundation
-
-#if canImport(UIKit)
 import UIKit
-#endif
 
 class SourceManager {
     static let shared = SourceManager()
@@ -288,11 +285,9 @@ extension SourceManager {
                 installedVersion < breakingChangeVersion
             {
                 // if there was a breaking change, prompt for migration
-#if !os(macOS)
                 Task { @MainActor in
                     (UIApplication.shared.delegate as? AppDelegate)?.handleSourceMigration(source: newSource)
                 }
-#endif
             }
 
             result = newSource
