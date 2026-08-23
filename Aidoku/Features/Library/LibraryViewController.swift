@@ -1482,7 +1482,7 @@ extension LibraryViewController {
             bottomMenuChildren.append(UIMenu(title: NSLocalizedString("MARK_ALL"), image: nil, children: [
                 // read chapters
                 UIAction(title: NSLocalizedString("READ"), image: UIImage(systemName: "checkmark.circle")) { _ in
-                    (UIApplication.shared.delegate as? AppDelegate)?.showLoadingIndicator()
+                    UIApplication.shared.appDelegate?.showLoadingIndicator()
 
                     Task {
                         for manga in mangaInfo {
@@ -1495,12 +1495,12 @@ extension LibraryViewController {
                             )
                         }
 
-                        await (UIApplication.shared.delegate as? AppDelegate)?.hideLoadingIndicator()
+                        await UIApplication.shared.appDelegate?.hideLoadingIndicator()
                     }
                 },
                 // unread chapters
                 UIAction(title: NSLocalizedString("UNREAD"), image: UIImage(systemName: "minus.circle")) { _ in
-                    (UIApplication.shared.delegate as? AppDelegate)?.showLoadingIndicator()
+                    UIApplication.shared.appDelegate?.showLoadingIndicator()
 
                     Task {
                         for manga in mangaInfo {
@@ -1510,7 +1510,7 @@ extension LibraryViewController {
                             )
                         }
 
-                        await (UIApplication.shared.delegate as? AppDelegate)?.hideLoadingIndicator()
+                        await UIApplication.shared.appDelegate?.hideLoadingIndicator()
                     }
                 }
             ]))
