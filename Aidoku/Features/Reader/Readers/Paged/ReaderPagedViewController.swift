@@ -1181,7 +1181,7 @@ extension ReaderPagedViewController: UIContextMenuInteractionDelegate {
                     let isManuallySet = self.manuallyIsolatedPages.contains(page)
                     if isManuallySet {
                         let unsetAction = UIAction(
-                            title: NSLocalizedString("UNSET_AS_SINGLE_PAGE", comment: ""),
+                            title: NSLocalizedString("UNSET_AS_SINGLE_PAGE"),
                             image: UIImage(systemName: "rectangle.portrait.slash")
                         ) { _ in
                             Task { @MainActor in
@@ -1191,7 +1191,7 @@ extension ReaderPagedViewController: UIContextMenuInteractionDelegate {
                         actions.insert(unsetAction, at: 2)
                     } else if self.canDisplayAsDoublePage(page) {
                         let setAction = UIAction(
-                            title: NSLocalizedString("SET_AS_SINGLE_PAGE", comment: ""),
+                            title: NSLocalizedString("SET_AS_SINGLE_PAGE"),
                             image: UIImage(systemName: "rectangle.portrait")
                         ) { _ in
                             Task { @MainActor in
