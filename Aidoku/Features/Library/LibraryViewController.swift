@@ -1026,7 +1026,7 @@ extension LibraryViewController {
             } else if menu.title == LibraryFilter.FilterMethod.source.title {
                 menu.replacingChildren(self.viewModel.sourceKeys.map { key in
                     UIAction(
-                        title: SourceManager.shared.source(for: key)?.name ?? key,
+                        title: SourceManager.shared.store.source(for: key)?.name ?? key,
                         attributes: .keepsMenuPresented,
                         state: self.filterState(for: .source, value: key)
                     ) { [weak self] _ in
@@ -1190,7 +1190,7 @@ extension LibraryViewController {
                         image: LibraryFilter.FilterMethod.source.image,
                         children: self.viewModel.sourceKeys.map { key in
                             UIAction(
-                                title: SourceManager.shared.source(for: key)?.name ?? key,
+                                title: SourceManager.shared.store.source(for: key)?.name ?? key,
                                 attributes: attributes,
                                 state: self.filterState(for: .source, value: key)
                             ) { [weak self] _ in
@@ -1312,7 +1312,7 @@ extension LibraryViewController {
 
                 if let chapter = nextChapter {
                     // open reader view
-                    guard let source = SourceManager.shared.source(for: info.id.sourceKey) else {
+                    guard let source = await SourceManager.shared.source(for: info.id.sourceKey) else {
                         return
                     }
                     let manga = AidokuRunner.Manga(
@@ -1470,7 +1470,7 @@ extension LibraryViewController {
                 let migrateView = MigrateSelectDestinationView(
                     selectedSeries: manga,
                     selectedSources: manga.count == 1
-                        ? SourceManager.shared.source(for: manga[0].sourceKey).flatMap { [$0.toInfo()] } ?? []
+                        ? SourceManager.shared.store.source(for: manga[0].sourceKey).flatMap { [$0.toInfo()] } ?? []
                         : []
                 )
                 let viewController = SwiftUINavigationViewController(rootView: migrateView)
@@ -1551,7 +1551,7 @@ extension LibraryViewController {
 
             if
                 manga.id.sourceKey != LocalSourceRunner.sourceKey,
-                SourceManager.shared.hasSourceInstalled(id: manga.id.sourceKey)
+                SourceManager.shared.store.isInstalled(sourceKey: manga.id.sourceKey)
             {
                 bottomMenuChildren.append(UIMenu(
                     title: NSLocalizedString("DOWNLOAD"),

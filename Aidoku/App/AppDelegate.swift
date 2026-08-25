@@ -285,6 +285,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         ReaderTemporaryPageStore.removeAllSessions()
 
         Task {
+            await SourceManager.shared.start()
             await BackupManager.shared.scheduleAutoBackup()
             if AppSettings.flags.libraryRefreshInProgress.get() {
                 presentAlert(
@@ -545,10 +546,13 @@ extension AppDelegate {
         if url.scheme == "aidoku" { // aidoku://
             if url.host == "addSourceList" { // addSourceList?url=
                 let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-                if let listUrlString = components?.queryItems?.first(where: { $0.name == "url" })?.value,
-                   let listUrl = URL(string: listUrlString) {
-                    guard !SourceManager.shared.sourceListURLs.contains(listUrl) else { return }
+                if
+                    let listUrlString = components?.queryItems?.first(where: { $0.name == "url" })?.value,
+                    let listUrl = URL(string: listUrlString)
+                {
                     Task {
+                        let sourceListURLs = await SourceManager.shared.getSourceListURLs()
+                        guard !sourceListURLs.contains(listUrl) else { return }
                         let success = await SourceManager.shared.addSourceList(url: listUrl)
                         if success {
                             presentAlert(
@@ -563,7 +567,7 @@ extension AppDelegate {
                         }
                     }
                 }
-            } else if let host = url.host, let source = SourceManager.shared.source(for: host) {
+            } else if let host = url.host, let source = SourceManager.shared.store.source(for: host) {
                 // todo: we should support opening items in library even if the source isn't installed
                 Task { @MainActor in
                     // support percent encoding characters like "/" for manga and chapter keys
@@ -646,7 +650,7 @@ extension AppDelegate {
                 }
             }
         } else if
-            SourceManager.shared.localSourceInstalled
+            SourceManager.shared.store.localSourceInstalled
                 && LocalFileManager.allowedFileExtensions.contains(url.pathExtension.lowercased())
         {
             Task {
@@ -676,13 +680,12 @@ extension AppDelegate {
             let targetUrl = (url as NSURL).resourceSpecifier
         else { return false }
 
-        // ensure sources are loaded
-        await SourceManager.shared.waitForSourcesLoad()
+        let allSources = await SourceManager.shared.getLoadedSources()
 
         // find source that uses the given url
         var targetSource: AidokuRunner.Source?
         var finalUrl: String?
-        for source in SourceManager.shared.sources {
+        for source in allSources {
             for sourceUrl in source.urls {
                 if let url = (sourceUrl as NSURL).resourceSpecifier, targetUrl.hasPrefix(url) {
                     targetSource = source

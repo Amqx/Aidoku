@@ -81,10 +81,9 @@ extension CoreDataManager {
         sourceId: String,
         mangaId: String,
         chapterIds: [String],
-        context: NSManagedObjectContext? = nil
+        context: NSManagedObjectContext
     ) -> [HistoryObject] {
         guard !chapterIds.isEmpty else { return [] }
-        let context = context ?? self.context
         var result: [HistoryObject] = []
         for batch in chapterIds.chunked(into: Self.fetchBatchSize) {
             let request = HistoryObject.fetchRequest()
@@ -294,7 +293,7 @@ extension CoreDataManager {
     func setCompleted(
         chapters: [Chapter],
         date: Date = Date(),
-        context: NSManagedObjectContext? = nil
+        context: NSManagedObjectContext
     ) -> Bool {
         setCompleted(
             chapterIds: chapters.map {
@@ -312,7 +311,6 @@ extension CoreDataManager {
         context: NSManagedObjectContext
     ) -> Bool {
         guard !chapterIds.isEmpty else { return false }
-        let context = context ?? self.context
 
         // fetch the existing history up front, so marking n chapters read doesn't take n requests
         var historyObjects: [ChapterIdentifier: HistoryObject] = [:]

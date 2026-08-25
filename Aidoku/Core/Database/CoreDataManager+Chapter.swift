@@ -45,10 +45,9 @@ extension CoreDataManager {
         sourceId: String,
         mangaId: String,
         chapterIds: [String],
-        context: NSManagedObjectContext? = nil
+        context: NSManagedObjectContext
     ) -> [String: ChapterObject] {
         guard !chapterIds.isEmpty else { return [:] }
-        let context = context ?? self.context
         var result: [String: ChapterObject] = [:]
         for batch in chapterIds.chunked(into: Self.fetchBatchSize) {
             let request = ChapterObject.fetchRequest()
