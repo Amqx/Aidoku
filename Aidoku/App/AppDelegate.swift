@@ -145,10 +145,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 "Library.refreshMetadata": false,
                 "Library.notifyNewChapters": false,
 
-                "Browse.languages": ["multi"] + Locale.preferredLanguages.map { Locale(identifier: $0).languageCode },
-                "Browse.contentRatings": ["safe", "containsNsfw"],
-                "Browse.updateCount": 0,
-
                 "History.lockHistoryTab": false,
 
                 "Reader.readingMode": "auto",
@@ -404,7 +400,7 @@ extension AppDelegate {
     func migrateSettings() {
         // migrate showNsfwSources setting
         if UserDefaults.standard.bool(forKey: "Browse.showNsfwSources") {
-            UserDefaults.standard.setValue(["safe", "containsNsfw", "primarilyNsfw"], forKey: "Browse.contentRatings")
+            AppSettings.browse.contentRatings.set([.safe, .containsNsfw, .primarilyNsfw])
             UserDefaults.standard.removeObject(forKey: "Browse.showNsfwSources")
         }
 

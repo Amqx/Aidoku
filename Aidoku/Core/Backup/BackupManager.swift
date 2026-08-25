@@ -22,7 +22,7 @@ actor BackupManager {
     private static let maxAutoBackups = 4
 
     private static let excludedSettings: Set<String> = Set([
-        "Browse.sourceLists", // stored separately
+        AppSettings.browse.sourceLists.key, // stored separately
         "General.icloudSync",
         // google drive upload state is meaningless without the tokens, which are never exported
         BackupManager.pendingUploadsKey

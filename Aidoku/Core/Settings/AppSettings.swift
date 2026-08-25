@@ -8,10 +8,11 @@
 import Foundation
 
 struct AppSettings {
+    static let browse = BrowseSettings()
     static let flags = FlagSettings()
 
     private static var keys: [any SettingsDefault] {
-        flags.keys
+        browse.keys + flags.keys
     }
 
     static func registerDefaults() {
