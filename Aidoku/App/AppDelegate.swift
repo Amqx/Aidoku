@@ -11,7 +11,7 @@ import Nuke
 import SwiftUI
 import UserNotifications
 
-@UIApplicationMain
+@main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 #if CANONICAL_BUILD          // true only for App-Store scheme
     static let canonicalID = "org.ry-st.Aidoku"
@@ -256,23 +256,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         performMigration()
         handleChaptersToBeDeleted()
 
-        networkObserverId = Reachability.registerConnectionTypeObserver { connectionType in
-            switch connectionType {
-                case .wifi:
-                    if UserDefaults.standard.bool(forKey: "Library.downloadOnlyOnWifi") {
-                        Task {
-                            await DownloadManager.shared.resumeDownloads()
-                        }
-                    }
-                case .cellular, .none:
-                    if UserDefaults.standard.bool(forKey: "Library.downloadOnlyOnWifi") {
-                        Task {
-                            await DownloadManager.shared.pauseDownloads()
-                        }
-                    }
-            }
-        }
-
         application.applicationSupportsShakeToEdit = true
 
         BackupManager.shared.register()
@@ -283,6 +266,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Task {
             await SourceManager.shared.start()
             await BackupManager.shared.scheduleAutoBackup()
+            networkObserverId = await Reachability.shared.registerConnectionTypeObserver { connectionType in
+                switch connectionType {
+                    case .wifi:
+                        if UserDefaults.standard.bool(forKey: "Library.downloadOnlyOnWifi") {
+                            Task {
+                                await DownloadManager.shared.resumeDownloads()
+                            }
+                        }
+                    case .cellular, .none:
+                        if UserDefaults.standard.bool(forKey: "Library.downloadOnlyOnWifi") {
+                            Task {
+                                await DownloadManager.shared.pauseDownloads()
+                            }
+                        }
+                }
+            }
+
             if AppSettings.flags.libraryRefreshInProgress.get() {
                 presentAlert(
                     title: NSLocalizedString("LIBRARY_REFRESH_INTERRUPTED"),
@@ -342,7 +342,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(_ application: UIApplication) {
         guard let networkObserverId else { return }
-        Reachability.unregisterConnectionTypeObserver(networkObserverId)
+        Task {
+            await Reachability.shared.unregisterConnectionTypeObserver(networkObserverId)
+        }
     }
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
@@ -889,7 +891,7 @@ extension AppDelegate: ImagePipeline.Delegate {
     }
 }
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
+extension AppDelegate: @MainActor UNUserNotificationCenterDelegate {
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
