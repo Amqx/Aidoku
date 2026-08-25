@@ -57,9 +57,13 @@ actor BackupManager {
     @discardableResult
     func save(backup: Backup, url: URL? = nil) -> URL? {
         Self.directory.createDirectory()
-        let encoder = PropertyListEncoder()
-        encoder.outputFormat = .binary
-        guard let plist = try? encoder.encode(backup) else { return nil }
+        let data: Data
+        do {
+            data = try BackupArchiveCodec.encode(backup)
+        } catch {
+            LogManager.logger.error("Could not encode backup: \(error)")
+            return nil
+        }
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
         let path = if let url {
@@ -67,7 +71,12 @@ actor BackupManager {
         } else {
             Self.directory.appendingPathComponent("aidoku_\(dateFormatter.string(from: backup.date)).aib")
         }
-        guard (try? plist.write(to: path)) != nil else { return nil }
+        do {
+            try data.write(to: path, options: .atomic)
+        } catch {
+            LogManager.logger.error("Could not write backup to \(path.lastPathComponent): \(error)")
+            return nil
+        }
         NotificationCenter.default.post(name: Notification.Name("updateBackupList"), object: nil)
         return path
     }

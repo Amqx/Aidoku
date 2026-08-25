@@ -13,7 +13,8 @@ import Foundation
 struct BackupInfo: Hashable, Identifiable, Sendable {
     var id: URL { url }
 
-    struct Counts: Hashable, Sendable {
+    /// The per-section item counts shown alongside a backup.
+    struct Counts: Codable, Hashable, Sendable {
         var library = 0
         var history = 0
         var manga = 0
@@ -25,6 +26,41 @@ struct BackupInfo: Hashable, Identifiable, Sendable {
         var sources = 0
         var sourceLists = 0
         var settings = 0
+
+        init() {}
+
+        init(backup: Backup) {
+            library = backup.library?.count ?? 0
+            history = backup.history?.count ?? 0
+            manga = backup.manga?.count ?? 0
+            chapters = backup.chapters?.count ?? 0
+            trackItems = backup.trackItems?.count ?? 0
+            readingSessions = backup.readingSessions?.count ?? 0
+            updates = backup.updates?.count ?? 0
+            categories = backup.categories?.count ?? 0
+            sources = backup.sources?.count ?? 0
+            sourceLists = backup.sourceLists?.count ?? 0
+            settings = backup.settings?.count ?? 0
+        }
+
+        // a section missing from an older summary reads as zero rather than failing the whole decode
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            func count(_ key: CodingKeys) -> Int {
+                (try? container.decodeIfPresent(Int.self, forKey: key)) ?? 0
+            }
+            library = count(.library)
+            history = count(.history)
+            manga = count(.manga)
+            chapters = count(.chapters)
+            trackItems = count(.trackItems)
+            readingSessions = count(.readingSessions)
+            updates = count(.updates)
+            categories = count(.categories)
+            sources = count(.sources)
+            sourceLists = count(.sourceLists)
+            settings = count(.settings)
+        }
     }
 
     let url: URL
@@ -38,12 +74,30 @@ struct BackupInfo: Hashable, Identifiable, Sendable {
 
     static func load(from url: URL) -> BackupInfo? {
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize).map(Int64.init)
+        if
+            let data = try? Data(contentsOf: url, options: .mappedIfSafe),
+            let summary = BackupArchiveCodec.summary(from: data)
+        {
+            return BackupInfo(url: url, size: size, summary: summary)
+        }
         if let info = loadFromBinaryPlist(url: url, size: size) {
             return info
         }
         // xml/ json don't have any way to get counts like plist, so resort to full decode
         guard let backup = Backup.load(from: url) else { return nil }
         return BackupInfo(url: url, size: size, backup: backup)
+    }
+
+    private init(url: URL, size: Int64?, summary: BackupArchiveCodec.Summary) {
+        self.init(
+            url: url,
+            name: summary.name,
+            date: summary.date,
+            automatic: summary.automatic,
+            version: summary.version,
+            size: size,
+            counts: summary.counts
+        )
     }
 
     init(url: URL, size: Int64?, backup: Backup) {
@@ -53,19 +107,7 @@ struct BackupInfo: Hashable, Identifiable, Sendable {
         self.automatic = backup.automatic ?? false
         self.version = backup.version
         self.size = size
-        self.counts = Counts(
-            library: backup.library?.count ?? 0,
-            history: backup.history?.count ?? 0,
-            manga: backup.manga?.count ?? 0,
-            chapters: backup.chapters?.count ?? 0,
-            trackItems: backup.trackItems?.count ?? 0,
-            readingSessions: backup.readingSessions?.count ?? 0,
-            updates: backup.updates?.count ?? 0,
-            categories: backup.categories?.count ?? 0,
-            sources: backup.sources?.count ?? 0,
-            sourceLists: backup.sourceLists?.count ?? 0,
-            settings: backup.settings?.count ?? 0
-        )
+        self.counts = Counts(backup: backup)
     }
 
     private init(url: URL, name: String?, date: Date, automatic: Bool, version: String?, size: Int64?, counts: Counts) {

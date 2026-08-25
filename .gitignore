@@ -16,6 +16,7 @@ scripts
 # Other
 .DS_Store
 *.ipa
+*.aib
 
 # Zed
 .zed
