@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreData
+import AidokuRunner
 
 @objc(HistoryObject)
 public class HistoryObject: NSManagedObject {
@@ -20,6 +21,22 @@ public class HistoryObject: NSManagedObject {
         progress = -1
         total = 0
         completed = false
+    }
+
+    func loadChapterMetadata(from chapter: AidokuRunner.Chapter) {
+        chapterNumber = chapter.chapterNumber.map { NSNumber(value: $0) }
+        volumeNumber = chapter.volumeNumber.map { NSNumber(value: $0) }
+        chapterTitle = chapter.title
+    }
+
+    func metadataChapter() -> AidokuRunner.Chapter? {
+        guard chapterNumber != nil || volumeNumber != nil || chapterTitle != nil else { return nil }
+        return .init(
+            key: chapterId,
+            title: chapterTitle,
+            chapterNumber: chapterNumber?.floatValue,
+            volumeNumber: volumeNumber?.floatValue
+        )
     }
 }
 
@@ -38,6 +55,9 @@ extension HistoryObject {
     @NSManaged public var total: Int16
     @NSManaged public var completed: Bool
     @NSManaged public var scrollPosition: NSNumber?
+    @NSManaged public var chapterNumber: NSNumber?
+    @NSManaged public var volumeNumber: NSNumber?
+    @NSManaged public var chapterTitle: String?
 
     @NSManaged public var chapter: ChapterObject?
     @NSManaged public var sessions: NSSet?

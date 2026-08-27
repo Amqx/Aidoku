@@ -5,12 +5,15 @@
 //  Created by Skitty on 8/14/22.
 //
 
+import AidokuRunner
 import CoreData
 
 extension CoreDataManager {
     /// Remove all history objects.
     func clearHistory(context: NSManagedObjectContext) {
         clear(request: HistoryObject.fetchRequest(), context: context)
+        clearCachedManga(context: context)
+        clearCachedChapters(context: context)
     }
 
     /// Remove all history objects from manga not in library
@@ -42,6 +45,7 @@ extension CoreDataManager {
 
         request.predicate = excludePredicate
         clear(request: request, context: context)
+        clearHistoryCacheExcludingLibrary(context: context)
     }
 
     /// Gets all history objects.
@@ -142,6 +146,7 @@ extension CoreDataManager {
         for item in history {
             context.delete(item)
         }
+        removeHistoryCache(mangaId: mangaId, context: context)
     }
 
     func removeHistory(chapterIds: [ChapterIdentifier]) async {
@@ -161,6 +166,11 @@ extension CoreDataManager {
                     for object in objects {
                         context.delete(object)
                     }
+                    self.pruneHistoryCache(
+                        mangaId: key,
+                        removedChapterIds: chapterIds.map(\.chapterKey),
+                        context: context
+                    )
                 }
                 try context.save()
             } catch {
@@ -262,6 +272,7 @@ extension CoreDataManager {
     }
 
     /// Set page progress for a chapter and creates a history object if it doesn't already exist.
+    @discardableResult
     func setProgress(
         _ progress: Int,
         chapterId: ChapterIdentifier,
@@ -270,7 +281,7 @@ extension CoreDataManager {
         dateRead: Date? = nil,
         completed: Bool? = nil,
         context: NSManagedObjectContext
-    ) {
+    ) -> HistoryObject {
         let historyObject = self.getOrCreateHistory(
             chapterId: chapterId,
             context: context
@@ -286,6 +297,7 @@ extension CoreDataManager {
         if let completed {
             historyObject.completed = completed
         }
+        return historyObject
     }
 
     /// Marks chapters as completed.
@@ -307,6 +319,7 @@ extension CoreDataManager {
     @discardableResult
     func setCompleted(
         chapterIds: [ChapterIdentifier],
+        chapterMetadata: [ChapterIdentifier: AidokuRunner.Chapter] = [:],
         date: Date = Date(),
         context: NSManagedObjectContext
     ) -> Bool {
@@ -367,6 +380,9 @@ extension CoreDataManager {
                 historyObject.chapter = chapterObjects[chapterId]
                 // track it, so duplicate ids don't create duplicate history
                 historyObjects[chapterId] = historyObject
+            }
+            if let chapter = chapterMetadata[chapterId] {
+                historyObject.loadChapterMetadata(from: chapter)
             }
             guard !historyObject.completed else { continue }
             historyObject.completed = true

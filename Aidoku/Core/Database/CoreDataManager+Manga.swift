@@ -35,6 +35,27 @@ extension CoreDataManager {
         return (try? context.fetch(request))?.first
     }
 
+    /// Get manga objects for a set of identifiers without issuing one fetch per manga.
+    func getManga(
+        mangaIds: [MangaIdentifier],
+        context: NSManagedObjectContext
+    ) -> [MangaIdentifier: MangaObject] {
+        var result: [MangaIdentifier: MangaObject] = [:]
+        for batch in mangaIds.chunked(into: Self.fetchBatchSize) {
+            let request = MangaObject.fetchRequest()
+            request.predicate = NSCompoundPredicate(orPredicateWithSubpredicates: batch.map {
+                NSCompoundPredicate(andPredicateWithSubpredicates: [
+                    NSPredicate(format: "sourceId == %@", $0.sourceKey),
+                    NSPredicate(format: "id == %@", $0.mangaKey)
+                ])
+            })
+            for object in (try? context.fetch(request)) ?? [] where result[object.identifier] == nil {
+                result[object.identifier] = object
+            }
+        }
+        return result
+    }
+
     /// Create a manga object.
     @discardableResult
     func createManga(

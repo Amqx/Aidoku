@@ -24,13 +24,14 @@ extension HistoryManager {
         let mangaId = chapterId.mangaIdentifier
         await CoreDataManager.shared.container.performBackgroundTask { context in
             CoreDataManager.shared.setRead(mangaId: mangaId, context: context)
-            CoreDataManager.shared.setProgress(
+            let historyObject = CoreDataManager.shared.setProgress(
                 progress,
                 chapterId: chapterId,
                 totalPages: totalPages,
                 scrollPosition: scrollPosition,
                 context: context
             )
+            historyObject.loadChapterMetadata(from: chapter)
             do {
                 try context.save()
             } catch {
@@ -80,10 +81,18 @@ extension HistoryManager {
         // mark each manga as read
         let success = await CoreDataManager.shared.container.performBackgroundTask { context in
             // mark chapters as read
+            var chapterMetadata: [ChapterIdentifier: AidokuRunner.Chapter] = [:]
+            for chapter in chapters {
+                let chapterId = ChapterIdentifier(
+                    sourceKey: mangaId.sourceKey,
+                    mangaKey: mangaId.mangaKey,
+                    chapterKey: chapter.key
+                )
+                chapterMetadata[chapterId] = chapter
+            }
             let success = CoreDataManager.shared.setCompleted(
-                chapterIds: chapters.map {
-                    .init(sourceKey: mangaId.sourceKey, mangaKey: mangaId.mangaKey, chapterKey: $0.key)
-                },
+                chapterIds: Array(chapterMetadata.keys),
+                chapterMetadata: chapterMetadata,
                 date: date,
                 context: context
             )
@@ -93,6 +102,8 @@ extension HistoryManager {
                     date: date,
                     context: context
                 )
+            }
+            if context.hasChanges {
                 do {
                     try context.save()
                 } catch {

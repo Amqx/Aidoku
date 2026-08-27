@@ -15,6 +15,9 @@ struct BackupHistory: Codable, Hashable {
     var progress: Int?
     var total: Int?
     var completed: Bool
+    var chapterNumber: Float?
+    var volumeNumber: Float?
+    var chapterTitle: String?
 
     init(historyObject: HistoryObject) {
         dateRead = historyObject.dateRead ?? Date.distantPast
@@ -24,6 +27,9 @@ struct BackupHistory: Codable, Hashable {
         progress = Int(historyObject.progress)
         total = Int(historyObject.total)
         completed = historyObject.completed
+        chapterNumber = historyObject.chapterNumber?.floatValue
+        volumeNumber = historyObject.volumeNumber?.floatValue
+        chapterTitle = historyObject.chapterTitle
     }
 
     func toObject(context: NSManagedObjectContext) -> HistoryObject {
@@ -35,6 +41,9 @@ struct BackupHistory: Codable, Hashable {
         obj.progress = Int16(progress ?? -1)
         obj.total = Int16(total ?? 0)
         obj.completed = completed
+        obj.chapterNumber = chapterNumber.map(NSNumber.init(value:))
+        obj.volumeNumber = volumeNumber.map(NSNumber.init(value:))
+        obj.chapterTitle = chapterTitle
         return obj
     }
 }
