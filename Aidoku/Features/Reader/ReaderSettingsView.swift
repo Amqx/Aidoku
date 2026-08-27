@@ -276,7 +276,7 @@ extension ReaderSettingsView {
                 setting: .init(
                     key: "Reader.pagesToPreload",
                     title: NSLocalizedString("PAGES_TO_PRELOAD"),
-                    value: .stepper(.init(minimumValue: 1, maximumValue: 10))
+                    value: .stepper(.init(minimumValue: 1, maximumValue: 20))
                 )
             )
             SettingView(
