@@ -580,7 +580,6 @@ extension ReaderWebtoonViewController {
             return
         }
 
-
         // wait until zooming and scrolling stops
         while isZooming || isScrolling {
             try? await Task.sleep(nanoseconds: 500_000_000)
