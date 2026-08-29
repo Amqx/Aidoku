@@ -40,7 +40,7 @@ final class CoreDataManager: @unchecked Sendable {
     private var lastHistoryToken: NSPersistentHistoryToken?
 
     private static var shouldUseiCloud: Bool {
-        UserDefaults.standard.bool(forKey: "General.icloudSync") && FileManager.default.ubiquityIdentityToken != nil
+        AppSettings.general.icloudSync.get() && FileManager.default.ubiquityIdentityToken != nil
     }
 
     private init() {
@@ -55,7 +55,7 @@ final class CoreDataManager: @unchecked Sendable {
         }
         .store(in: &cancellables)
 
-        NotificationCenter.default.publisher(for: .init("General.icloudSync"))
+        NotificationCenter.default.publisher(for: .init(AppSettings.general.icloudSync.key))
             .sink { [weak self] _ in
                 Task { @MainActor in
                     self?.updateCloudConfiguration()
