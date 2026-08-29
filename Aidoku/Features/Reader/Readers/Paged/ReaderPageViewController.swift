@@ -53,6 +53,7 @@ class ReaderPageViewController: BaseObservingViewController {
 
     private var pageSet = false
     private var page: Page?
+    private var didLoadPageSuccessfully = false
     private var sourceId: String?
     private var imageAspectRatio: CGFloat? // Aspect ratio of the image, > 1 means wide image
     private var pageBackground: PageBackground?
@@ -103,7 +104,7 @@ class ReaderPageViewController: BaseObservingViewController {
             case .page:
                 // zoom view
                 let zoomView = ZoomableScrollView(frame: view.bounds)
-                zoomView.zoomEnabled = false
+                zoomView.zoomEnabled = didLoadPageSuccessfully && !isInDoublePageController
                 zoomView.translatesAutoresizingMaskIntoConstraints = false
                 view.addSubview(zoomView)
 
@@ -176,6 +177,7 @@ class ReaderPageViewController: BaseObservingViewController {
             let result = await pageView.setPage(page, sourceId: sourceId, skipProcessing: skipProcessing)
             guard self.page == page else { return }
 
+            didLoadPageSuccessfully = result
             zoomView?.zoomEnabled = result && !isInDoublePageController
             reloadButton.isHidden = result
 
