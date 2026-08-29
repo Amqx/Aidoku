@@ -516,7 +516,12 @@ extension AppDelegate {
     }
 
     /// Shows a non-interactive loading indicator.
-    func showLoadingIndicator(style: LoadingStyle = .indefinite, completion: (() -> Void)? = nil) {
+    func showLoadingIndicator(
+        style: LoadingStyle = .indefinite,
+        message: String = NSLocalizedString("LOADING_ELLIPSIS"),
+        completion: (() -> Void)? = nil
+    ) {
+        loadingAlert.message = message
         switch style {
             case .indefinite:
                 loadingIndicator.startAnimating()
@@ -528,6 +533,11 @@ extension AppDelegate {
                 progressView.isHidden = false
         }
         topViewController?.present(loadingAlert, animated: true, completion: completion)
+    }
+
+    /// Updates the  progress of a shown loading indicator.
+    func updateLoadingIndicator(progress: Float) {
+        progressView.progress = progress
     }
 
     /// Dismisses a shown loading indicator.
