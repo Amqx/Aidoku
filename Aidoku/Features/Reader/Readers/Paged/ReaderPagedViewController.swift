@@ -464,21 +464,21 @@ extension ReaderPagedViewController {
 
             let pages = viewModel.preloadedPages
             guard !pages.isEmpty else { return }
-            let sourceId = viewModel.source?.key ?? viewModel.manga.sourceKey
+            let sourceKey = viewModel.manga.sourceKey
 
             if
                 let firstPage = pages.first,
                 let previewController = pageViewControllers.last,
                 case .page = previewController.type
             {
-                previewController.setPage(firstPage, sourceId: sourceId)
+                previewController.setPage(firstPage, sourceId: sourceKey)
             }
 
             await pagePrefetcher.prefetch(
                 pages: pages,
                 count: pageCount,
                 chapterKey: nextChapter.key,
-                sourceId: sourceId
+                sourceKey: sourceKey
             )
         }
     }
