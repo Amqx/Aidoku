@@ -174,6 +174,7 @@ struct MangaView: View {
                     source: viewModel.source,
                     manga: viewModel.manga
                 )
+                .navigationTransitionZoom(sourceID: viewModel.manga.identifier, in: transitionNamespace)
             }
             .task {
                 guard !detailsLoaded else { return }
@@ -302,6 +303,7 @@ extension MangaView {
                     }
                     tabBarController.search(for: viewModel.manga.title)
                 },
+                transitionNamespace: transitionNamespace,
                 onTrackerButtonPressed: {
                     let vc = TrackerModalViewController(manga: viewModel.manga)
                     vc.modalPresentationStyle = .overFullScreen
