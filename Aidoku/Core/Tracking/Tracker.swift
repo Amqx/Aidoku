@@ -20,6 +20,9 @@ protocol Tracker: AnyObject, Sendable {
     /// A boolean indicating if the tracker is currently logged in.
     var isLoggedIn: Bool { get }
 
+    /// A boolean indicating if the tracker's catalog can be searched without authentication.
+    var supportsAnonymousSearch: Bool { get }
+
     /// Get the configurable fields for the tracker.
     func getTrackerInfo() async throws -> TrackerInfo
 
@@ -102,17 +105,28 @@ protocol Tracker: AnyObject, Sendable {
     ///   - mangaKey: The  key for the given manga.
     func canRegister(mangaId: MangaIdentifier) -> Bool
 
+    /// Check if a given manga can be searched on this tracker.
+    func canSearch(mangaId: MangaIdentifier) -> Bool
+
     /// Log out from the tracker.
     func logout() async throws
 }
 
 // Default values for optional properties
 extension Tracker {
+    var supportsAnonymousSearch: Bool {
+        false
+    }
+
     func option(for score: Int, options: [(String, Int)]) async -> String? {
         options.first { $0.1 == score }?.0
     }
 
     func canRegister(mangaId: MangaIdentifier) -> Bool {
         isLoggedIn
+    }
+
+    func canSearch(mangaId: MangaIdentifier) -> Bool {
+        supportsAnonymousSearch || canRegister(mangaId: mangaId)
     }
 }

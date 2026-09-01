@@ -15,10 +15,15 @@ enum AniListQueries {
           id
           title {
             userPreferred
+            romaji
+            english
+            native
           }
+          synonyms
           description
           status
           format
+          averageScore
           coverImage {
             medium
           }
@@ -37,10 +42,15 @@ enum AniListQueries {
           id
           title {
             userPreferred
+            romaji
+            english
+            native
           }
+          synonyms
           description
           status
           format
+          averageScore
           coverImage {
             medium
           }
@@ -58,10 +68,15 @@ enum AniListQueries {
         id
         title {
           userPreferred
+          romaji
+          english
+          native
         }
+        synonyms
         description
         status
         format
+        averageScore
         coverImage {
           medium
         }
@@ -193,9 +208,11 @@ struct ALPage: Codable, Sendable {
 struct Media: Codable, Sendable {
     var id: Int?
     var title: MediaTitle?
+    var synonyms: [String]?
     var description: String?
     var status: String?
     var format: String?
+    var averageScore: Int?
     var coverImage: MediaImage?
 
     var mediaListEntry: MediaListEntry?
@@ -205,6 +222,13 @@ struct Media: Codable, Sendable {
 
 struct MediaTitle: Codable, Sendable {
     var userPreferred: String?
+    var romaji: String?
+    var english: String?
+    var native: String?
+
+    var all: [String] {
+        [userPreferred, romaji, english, native].compactMap { $0 }
+    }
 }
 
 struct MediaImage: Codable, Sendable {

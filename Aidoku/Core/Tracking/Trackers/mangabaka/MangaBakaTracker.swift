@@ -13,6 +13,7 @@ final class MangaBakaTracker: OAuthTracker {
     let id = "mangabaka"
     let name = "MangaBaka"
     let icon = PlatformImage(named: "mangabaka")
+    let supportsAnonymousSearch = true
 
     let api = MangaBakaApi()
 
@@ -87,20 +88,26 @@ final class MangaBakaTracker: OAuthTracker {
     func search(title: String, includeNsfw: Bool) async throws -> [TrackSearchItem] {
         let results = try await api.search(query: title, nsfw: includeNsfw)
         let libraryEntries: [MangaBakaLibraryEntry]
-        do {
-            libraryEntries = try await api.getLibraryEntries(seriesIds: results.map { $0.id })
-        } catch {
-            LogManager.logger.error("Failed to fetch library entries (\(id)): \(error)")
+        if isLoggedIn {
+            do {
+                libraryEntries = try await api.getLibraryEntries(seriesIds: results.map { $0.id })
+            } catch {
+                LogManager.logger.error("Failed to fetch library entries (\(id)): \(error)")
+                libraryEntries = []
+            }
+        } else {
             libraryEntries = []
         }
         return results.map { series in
             TrackSearchItem(
                 id: String(series.id),
                 title: series.title,
+                alternateTitles: [series.romanizedTitle, series.nativeTitle].compactMap { $0 },
                 coverUrl: series.cover.raw.url,
                 description: series.description,
                 status: series.status.into(),
                 type: series.type.into(),
+                rating: series.rating.map { $0 / 10 },
                 tracked: libraryEntries.contains(where: { $0.seriesId == series.id })
             )
         }

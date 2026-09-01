@@ -86,7 +86,7 @@ extension BangumiApi {
         let searchBody: [String: Any] = ["keyword": query, "sort": "match", "filter": filter]
         let body = try? JSONSerialization.data(withJSONObject: searchBody)
 
-        if let response: BangumiSearchResponse = await request(url, method: "POST", body: body) {
+        if let response: BangumiSearchResponse = await catalogRequest(url, method: "POST", body: body) {
             return response.subjects
         }
 
@@ -114,7 +114,7 @@ extension BangumiApi {
 
     func getSubject(id: Int) async -> BangumiSubject? {
         let url = URL(string: "https://api.bgm.tv/v0/subjects/\(id)")!
-        return await request(url)
+        return await catalogRequest(url)
     }
 
     func getSubjectState(id: Int) async -> BangumiCollection? {
@@ -207,6 +207,31 @@ extension BangumiApi {
         }
 
         return try? JSONDecoder().decode(T.self, from: data)
+    }
+
+    private func catalogRequest<T: Codable>(_ url: URL, method: String = "GET", body: Data? = nil) async -> T? {
+        var request = await authorizedRequest(for: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpMethod = method
+        if let body {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = body
+        }
+
+        let data: Data
+        if request.value(forHTTPHeaderField: "Authorization") != nil {
+            guard let response = try? await requestData(urlRequest: request) else {
+                return nil
+            }
+            data = response.0
+        } else {
+            guard let response = try? await URLSession.shared.data(for: request) else {
+                return nil
+            }
+            data = response.0
+        }
+
+        return try? decoder.decode(T.self, from: data)
     }
 }
 

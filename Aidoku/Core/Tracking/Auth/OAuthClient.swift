@@ -122,10 +122,12 @@ extension OAuthClient {
         if tokens == nil { loadTokens() }
 
         var request = URLRequest(url: url)
-        request.addValue(
-            "\(tokens?.tokenType ?? "Bearer") \(tokens?.accessToken ?? "")",
-            forHTTPHeaderField: "Authorization"
-        )
+        if let accessToken = tokens?.accessToken, !accessToken.isEmpty {
+            request.addValue(
+                "\(tokens?.tokenType ?? "Bearer") \(accessToken)",
+                forHTTPHeaderField: "Authorization"
+            )
+        }
 
         // Add any additional headers
         if let additionalHeaders {

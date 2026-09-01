@@ -50,6 +50,7 @@ struct MangaDetailsHeaderView: View {
     @State private var isTracking = false
     @State private var hasAvailableTrackers = false
     @State private var showLibraryRemoveConfirm = false
+    @State private var showTrackerLookup = false
 
     static let coverWidth: CGFloat = 114
 
@@ -263,6 +264,9 @@ struct MangaDetailsHeaderView: View {
             updateReadButtonText()
             hasAvailableTrackers = await TrackerManager.shared.hasAvailableTrackers(mangaId: manga.identifier)
         }
+        .sheet(isPresented: $showTrackerLookup) {
+            TrackerLookupView(manga: manga)
+        }
     }
 
     @ViewBuilder
@@ -294,7 +298,7 @@ struct MangaDetailsHeaderView: View {
     }
 
     var buttonsView: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Button {
                 // long holding also triggers a press on release, so cancel that
                 if longHeldBookmark {
@@ -343,6 +347,14 @@ struct MangaDetailsHeaderView: View {
             } message: {
                 Text(NSLocalizedString("REMOVE_FROM_LIBRARY_CONFIRM_TEXT"))
             }
+
+            Button {
+                showTrackerLookup = true
+            } label: {
+                Image(systemName: "magnifyingglass")
+            }
+            .buttonStyle(MangaActionButtonStyle())
+            .accessibilityLabel(NSLocalizedString("TRACKER_LOOKUP"))
 
             if hasAvailableTrackers {
                 Button {
@@ -538,7 +550,7 @@ private struct MangaActionButtonStyle: ButtonStyle {
             .foregroundStyle(selected ? Color.white : Color.accentColor)
             .opacity(configuration.isPressed ? 0.4 : 1)
             .font(.system(size: 16, weight: .semibold))
-            .frame(width: 40, height: 32)
+            .frame(minWidth: 32, maxWidth: 40, minHeight: 32, maxHeight: 32)
             .background(selected ? Color.accentColor : Color(UIColor.secondarySystemFill))
             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }

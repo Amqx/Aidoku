@@ -80,6 +80,22 @@ actor MangaBakaApi {
         try decoder.decode(T.self, from: try await requestData(url: url))
     }
 
+    /// Requests a public catalog endpoint, authenticated if the user is logged in.
+    ///
+    /// The catalog is readable anonymously, but a logged-in user's requests should still carry
+    /// their token so responses reflect their account (and get the 401 refresh retry).
+    private func catalogData(url: URL) async throws -> Data {
+        let authorizedRequest = await oauth.authorizedRequest(for: url)
+        if authorizedRequest.value(forHTTPHeaderField: "Authorization") != nil {
+            return try await requestData(urlRequest: authorizedRequest)
+        }
+        return try await URLSession.shared.data(from: url).0
+    }
+
+    private func catalogObject<T: Decodable>(from url: URL) async throws -> T {
+        try decoder.decode(T.self, from: try await catalogData(url: url))
+    }
+
     private func object<T: Decodable>(from request: URLRequest) async throws -> T {
         try decoder.decode(T.self, from: try await requestData(urlRequest: request))
     }
@@ -106,7 +122,7 @@ extension MangaBakaApi {
         guard let url = components.url else {
             throw MangaBakaApiError.invalidURL
         }
-        let results: MangaBakaResponse<[MangaBakaSeries]> = try await object(from: url)
+        let results: MangaBakaResponse<[MangaBakaSeries]> = try await catalogObject(from: url)
         if let data = results.data {
             return data
         } else {
@@ -118,7 +134,7 @@ extension MangaBakaApi {
         guard let url = URL(string: "./v1/series/\(id)", relativeTo: baseApiUrl) else {
             throw MangaBakaApiError.invalidURL
         }
-        let results: MangaBakaResponse<MangaBakaSeries> = try await object(from: url)
+        let results: MangaBakaResponse<MangaBakaSeries> = try await catalogObject(from: url)
         if let data = results.data {
             return data
         } else {

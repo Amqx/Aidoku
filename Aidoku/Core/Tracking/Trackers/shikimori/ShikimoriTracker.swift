@@ -13,6 +13,7 @@ final class ShikimoriTracker: OAuthTracker {
     let id = "shikimori"
     let name = "Shikimori"
     let icon = PlatformImage(named: "shikimori")
+    let supportsAnonymousSearch = true
 
     let api = ShikimoriApi()
 
@@ -76,9 +77,13 @@ private extension ShikimoriTracker {
             TrackSearchItem(
                 id: $0.id,
                 title: $0.russian ?? $0.name,
+                // the displayed title is russian where available, so keep the original for matching
+                alternateTitles: [$0.name],
                 coverUrl: $0.poster.mini2xUrl,
+                status: getPublishingStatus(statusString: $0.status),
                 type: getMediaType(typeString: $0.kind),
-                tracked: false
+                rating: $0.score,
+                tracked: nil // the search api doesn't report user rates
             )
         } ?? []
     }
@@ -90,6 +95,17 @@ private extension ShikimoriTracker {
             case "one_shot": return .oneShot
             case "manhwa": return .manhwa
             case "manhua": return .manhua
+            default: return .unknown
+        }
+    }
+
+    func getPublishingStatus(statusString: String) -> PublishingStatus {
+        switch statusString {
+            case "anons": return .notPublished
+            case "ongoing": return .ongoing
+            case "released": return .completed
+            case "paused": return .hiatus
+            case "discontinued": return .cancelled
             default: return .unknown
         }
     }

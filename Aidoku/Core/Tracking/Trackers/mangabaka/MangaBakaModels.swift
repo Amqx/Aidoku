@@ -69,10 +69,14 @@ enum MangaBakaContentRating: String, Decodable {
 struct MangaBakaSeries: Decodable {
     let id: Int
     let title: String
+    let nativeTitle: String?
+    let romanizedTitle: String?
     let cover: Cover
     let description: String?
     let status: MangaBakaStatus
     let type: MangaBakaType
+    /// The community rating, on a hundred-point scale.
+    let rating: Double?
 
     let totalChapters: String?
     let finalVolume: String?
@@ -87,10 +91,13 @@ struct MangaBakaSeries: Decodable {
     enum CodingKeys: String, CodingKey {
         case id
         case title
+        case nativeTitle = "native_title"
+        case romanizedTitle = "romanized_title"
         case cover
         case description
         case status
         case type
+        case rating
         case totalChapters = "total_chapters"
         case finalVolume = "final_volume"
     }

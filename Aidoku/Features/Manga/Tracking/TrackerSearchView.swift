@@ -221,7 +221,7 @@ private struct TrackerSearchItemCell: View {
                 }
             }
             Spacer()
-            if item.tracked {
+            if item.tracked == true {
                 Circle()
                     .fill(Color.blue.opacity(0.5))
                     .frame(width: 10, height: 10)

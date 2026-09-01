@@ -22,6 +22,16 @@ struct MyAnimeListMangaPicture: Codable {
     var large: String?
 }
 
+struct MyAnimeListAlternativeTitles: Codable {
+    var synonyms: [String]?
+    var en: String?
+    var ja: String?
+
+    var all: [String] {
+        [en, ja].compactMap { $0 } + (synonyms ?? [])
+    }
+}
+
 struct MyAnimeListMangaStatus: Codable {
     var isRereading: Bool?
     var numVolumesRead: Int?
@@ -76,24 +86,28 @@ struct MyAnimeListMangaStatus: Codable {
 struct MyAnimeListManga: Codable {
     var id: Int
     var title: String?
+    var alternativeTitles: MyAnimeListAlternativeTitles?
     var synopsis: String?
     var mainPicture: MyAnimeListMangaPicture?
     var numVolumes: Int?
     var numChapters: Int?
     var status: String?
     var mediaType: String?
+    var mean: Double?
     var startDate: String?
     var myListStatus: MyAnimeListMangaStatus?
 
     enum CodingKeys: String, CodingKey {
         case id
         case title
+        case alternativeTitles = "alternative_titles"
         case synopsis
         case mainPicture = "main_picture"
         case numVolumes = "num_volumes"
         case numChapters = "num_chapters"
         case status
         case mediaType = "media_type"
+        case mean
         case startDate = "start_date"
         case myListStatus = "my_list_status"
     }

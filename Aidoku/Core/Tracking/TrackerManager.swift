@@ -337,6 +337,66 @@ actor TrackerManager {
         return false
     }
 
+    /// Searches every tracker available for a manga and returns its best catalog match.
+    func lookupDetails(for manga: AidokuRunner.Manga) async -> [TrackerLookupResult] {
+        let trackers = Self.trackers.filter { $0.canSearch(mangaId: manga.identifier) }
+        let trackerOrder = Dictionary(uniqueKeysWithValues: trackers.enumerated().map { ($1.id, $0) })
+
+        let results = await withTaskGroup(of: TrackerLookupResult.self) { group in
+            for tracker in trackers {
+                group.addTask {
+                    do {
+                        let items = try await tracker.search(
+                            for: manga,
+                            includeNsfw: manga.contentRating != .safe
+                        )
+                        let state = Self.bestMatch(in: items, title: manga.title)
+                        return TrackerLookupResult(tracker: tracker, state: state)
+                    } catch {
+                        LogManager.logger.error("Failed to look up details from tracker \(tracker.id): \(error)")
+                        return TrackerLookupResult(tracker: tracker, state: .failed)
+                    }
+                }
+            }
+
+            var results: [TrackerLookupResult] = []
+            for await result in group {
+                results.append(result)
+            }
+            return results
+        }
+
+        return results.sorted {
+            trackerOrder[$0.tracker.id, default: .max] < trackerOrder[$1.tracker.id, default: .max]
+        }
+    }
+
+    /// Picks the catalog entry that best corresponds to a given title.
+    ///
+    /// An entry is only a `match` if one of its titles matches after normalization. Otherwise the
+    /// tracker's own top result is returned as a `possibleMatch`, since it can't be confirmed to
+    /// describe the same series.
+    nonisolated static func bestMatch(in items: [TrackSearchItem], title: String) -> TrackerLookupResult.State {
+        let normalizedTitle = normalizedTrackerTitle(title)
+        let match = items.first {
+            $0.titles.contains { normalizedTrackerTitle($0) == normalizedTitle }
+        }
+        if let match {
+            return .match(match)
+        }
+        guard let first = items.first else { return .noMatch }
+        return .possibleMatch(first)
+    }
+
+    private nonisolated static func normalizedTrackerTitle(_ title: String) -> String {
+        title
+            .folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: .current)
+            .unicodeScalars
+            .filter { CharacterSet.alphanumerics.contains($0) }
+            .map(String.init)
+            .joined()
+    }
+
     /// Sync progress from tracker to local history.
     func syncProgressFromTracker(
         tracker: Tracker,

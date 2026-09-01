@@ -9,7 +9,7 @@ This fork will have a couple UI/ UX changes that I have made for personal prefer
 - Custom backup format that quarters backup sizes
     - This format is incompatible with upstream. If you need to move back to upstream's format
        get an AI or something to go through the format and write a converter for you.
-- Pre-loading images can spill into the next chapter
+- Quick lookup a title's ratings through trackers
 
 ## Installation
 

@@ -25,6 +25,17 @@ actor MyAnimeListApi {
         try await requestData(urlRequest: oauth.authorizedRequest(for: url))
     }
 
+    private func requestCatalogData(url: URL) async throws -> Data {
+        let authenticatedRequest = await oauth.authorizedRequest(for: url)
+        if authenticatedRequest.value(forHTTPHeaderField: "Authorization") != nil {
+            return try await requestData(urlRequest: authenticatedRequest)
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue(oauth.clientId, forHTTPHeaderField: "X-MAL-CLIENT-ID")
+        return try await URLSession.shared.data(for: request).0
+    }
+
     func refreshAccessToken() async -> OAuthResponse? {
         guard let refreshToken = await oauth.tokens?.refreshToken else { return nil }
 
@@ -78,25 +89,32 @@ actor MyAnimeListApi {
     private func request<T: Codable>(url: URL) async throws -> T {
         try decoder.decode(T.self, from: try await requestData(url: url))
     }
+
+    private func requestCatalog<T: Codable>(url: URL) async throws -> T {
+        try decoder.decode(T.self, from: try await requestCatalogData(url: url))
+    }
 }
 
 // MARK: - Data
 extension MyAnimeListApi {
-    func search(query: String) async throws -> MyAnimeListSearchResponse {
+    func search(query: String, limit: Int = 25) async throws -> MyAnimeListSearchResponse {
         var url = URL(string: baseApiUrl + "/manga")!
         url.queryParameters = [
             "q": query.take(first: 64), // Search query can't be greater than 64 characters
-            "nsfw": "true"
+            "nsfw": "true",
+            "limit": String(limit),
+            // request details inline so results don't need a follow-up call each
+            "fields": "id,title,alternative_titles,synopsis,main_picture,status,media_type,mean,my_list_status"
         ]
-        return try await self.request(url: url)
+        return try await requestCatalog(url: url)
     }
 
     func getMangaDetails(id: Int) async throws -> MyAnimeListManga? {
         guard var url = URL(string: baseApiUrl + "/manga/\(id)") else { return nil }
         url.queryParameters = [
-            "fields": "id,title,synopsis,num_chapters,main_picture,status,media_type,start_date,my_list_status"
+            "fields": "id,title,synopsis,num_chapters,main_picture,status,media_type,mean,start_date,my_list_status"
         ]
-        return try await self.request(url: url)
+        return try await requestCatalog(url: url)
     }
 
     func getMangaWithStatus(id: Int) async -> MyAnimeListManga? {

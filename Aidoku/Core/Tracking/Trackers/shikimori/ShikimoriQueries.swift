@@ -18,6 +18,7 @@ struct ShikimoriQueries {
         russian
         status
         kind
+        score
         poster {
           mini2xUrl
         }
@@ -53,6 +54,7 @@ struct ShikimoriManga: Codable {
     var russian: String?
     var status: String
     var kind: String
+    var score: Double?
     var poster: ShikimoriPoster
 }
 

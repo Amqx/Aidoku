@@ -675,6 +675,16 @@
 // Tracking
 "TRACKING" = "Tracking";
 "TRACKERS" = "Trackers";
+"TRACKER_LOOKUP" = "Tracker Lookup";
+"TRACKER_LOOKUP_DESCRIPTION" = "Best match from each available tracker";
+"TRACKER_LOOKUP_FAILED" = "Unable to search this tracker";
+"NO_TRACKERS_AVAILABLE" = "No Trackers Available";
+"NO_MATCH_FOUND" = "No match found";
+"POSSIBLE_MATCH" = "Possible match";
+"TRACKER_LOOKUP_UNAVAILABLE" = "Lookup Unavailable";
+"TRACKER_LOOKUP_UNAVAILABLE_TEXT" = "None of the trackers could be reached. Check your connection and try again.";
+"RATING_%@_OF_TEN" = "%@ / 10";
+"TRACKED" = "Tracked";
 "STATUS" = "Status";
 "VOLUMES" = "Volumes";
 "START_TRACKING" = "Start Tracking";

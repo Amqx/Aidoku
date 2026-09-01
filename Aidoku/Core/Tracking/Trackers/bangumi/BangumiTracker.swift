@@ -13,6 +13,7 @@ final class BangumiTracker: OAuthTracker {
     let id = "bangumi"
     let name = "Bangumi"
     let icon = PlatformImage(named: "bangumi")
+    let supportsAnonymousSearch = true
 
     let api = BangumiApi()
 
@@ -98,11 +99,13 @@ final class BangumiTracker: OAuthTracker {
             return [TrackSearchItem(
                 id: String(subject.id),
                 title: getDisplayTitle(for: subject),
+                alternateTitles: getAlternateTitles(for: subject),
                 coverUrl: getCoverUrl(for: subject),
                 description: subject.summary,
                 status: getPublishingStatus(subject: subject),
                 type: getSubjectType(for: subject),
-                tracked: false // TODO: check if tracked
+                rating: subject.rating.map { Double($0.score) },
+                tracked: nil // TODO: check if tracked
             )]
         } else {
             return await search(title: title, nsfw: includeNsfw)
@@ -118,11 +121,13 @@ final class BangumiTracker: OAuthTracker {
             TrackSearchItem(
                 id: String($0.id),
                 title: getDisplayTitle(for: $0),
+                alternateTitles: getAlternateTitles(for: $0),
                 coverUrl: getCoverUrl(for: $0),
                 description: $0.summary,
                 status: getPublishingStatus(subject: $0),
                 type: getSubjectType(for: $0),
-                tracked: false
+                rating: $0.rating.map { Double($0.score) },
+                tracked: nil // TODO: check if tracked
             )
         }
     }
@@ -152,6 +157,12 @@ private extension BangumiTracker {
         } else {
             return "Unknown Title"
         }
+    }
+
+    func getAlternateTitles(for subject: BangumiSubject) -> [String] {
+        [subject.name, subject.name_cn]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
     }
 
     func getCoverUrl(for subject: BangumiSubject) -> String? {

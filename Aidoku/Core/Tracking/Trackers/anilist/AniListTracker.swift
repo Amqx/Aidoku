@@ -13,6 +13,7 @@ final class AniListTracker: OAuthTracker {
     let id = "anilist"
     let name = "AniList"
     let icon = PlatformImage(named: "anilist")
+    let supportsAnonymousSearch = true
 
     let api = AniListApi()
 
@@ -163,10 +164,12 @@ final class AniListTracker: OAuthTracker {
             return [TrackSearchItem(
                 id: String(media.id ?? 0),
                 title: media.title?.userPreferred,
+                alternateTitles: (media.title?.all ?? []) + (media.synonyms ?? []),
                 coverUrl: media.coverImage?.medium,
                 description: media.description,
                 status: getPublishingStatus(statusString: media.status ?? ""),
                 type: getMediaType(typeString: media.format ?? ""),
+                rating: media.averageScore.map { Double($0) / 10 },
                 tracked: media.mediaListEntry != nil
             )]
         } else {
@@ -183,10 +186,12 @@ final class AniListTracker: OAuthTracker {
             TrackSearchItem(
                 id: String($0.id ?? 0),
                 title: $0.title?.userPreferred,
+                alternateTitles: ($0.title?.all ?? []) + ($0.synonyms ?? []),
                 coverUrl: $0.coverImage?.medium,
                 description: $0.description,
                 status: getPublishingStatus(statusString: $0.status ?? ""),
                 type: getMediaType(typeString: $0.format ?? ""),
+                rating: $0.averageScore.map { Double($0) / 10 },
                 tracked: $0.mediaListEntry != nil
             )
         }

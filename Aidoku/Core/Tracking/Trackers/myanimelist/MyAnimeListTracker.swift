@@ -14,6 +14,7 @@ final class MyAnimeListTracker: OAuthTracker {
     let id = "myanimelist"
     let name = "MyAnimeList"
     let icon = PlatformImage(named: "mal")
+    let supportsAnonymousSearch = true
 
     let api = MyAnimeListApi()
 
@@ -88,16 +89,18 @@ final class MyAnimeListTracker: OAuthTracker {
     }
 
     func search(title: String, includeNsfw: Bool) async throws -> [TrackSearchItem] {
-        try await api.search(query: title).data.concurrentMap { node -> TrackSearchItem in
-            let details = try? await self.api.getMangaDetails(id: node.node.id)
+        try await api.search(query: title).data.map { node in
+            let manga = node.node
             return TrackSearchItem(
-                id: String(node.node.id),
-                title: details?.title,
-                coverUrl: details?.mainPicture?.large,
-                description: details?.synopsis,
-                status: self.getPublishingStatus(statusString: details?.status ?? ""),
-                type: self.getMediaType(typeString: details?.mediaType ?? ""),
-                tracked: details?.myListStatus != nil
+                id: String(manga.id),
+                title: manga.title,
+                alternateTitles: manga.alternativeTitles?.all ?? [],
+                coverUrl: manga.mainPicture?.large,
+                description: manga.synopsis,
+                status: getPublishingStatus(statusString: manga.status ?? ""),
+                type: getMediaType(typeString: manga.mediaType ?? ""),
+                rating: manga.mean,
+                tracked: manga.myListStatus != nil
             )
         }
     }
