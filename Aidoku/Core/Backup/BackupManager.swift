@@ -33,6 +33,7 @@ actor BackupManager {
     ]
     static let allowedSettingsPrefixes = [
         "General",
+        "Appearance",
         "Library",
         "Browse",
         "History",
@@ -226,7 +227,12 @@ actor BackupManager {
             else {
                 continue
             }
-            if let value = value as? String {
+            if
+                let number = value as? NSNumber,
+                CFGetTypeID(number) == CFBooleanGetTypeID()
+            {
+                convertedSettings[key] = .bool(number.boolValue)
+            } else if let value = value as? String {
                 convertedSettings[key] = .string(value)
             } else if let value = value as? Int {
                 convertedSettings[key] = .int(value)
