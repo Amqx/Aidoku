@@ -253,7 +253,20 @@ extension CoreDataManager {
 
                 if !newObjectIds.isEmpty {
                     CrashReporter.breadcrumb("deduplicating \(newObjectIds.count) imported objects", category: "coredata")
+                    let dedupeStart = Date()
                     self.deduplicate(objectIds: newObjectIds)
+                    let dedupeElapsed = Date().timeIntervalSince(dedupeStart)
+                    if dedupeElapsed > 1 {
+                        CrashReporter.warn(
+                            "deduplicating \(newObjectIds.count) objects took \(String(format: "%.1f", dedupeElapsed))s",
+                            category: "coredata"
+                        )
+                    } else {
+                        CrashReporter.breadcrumb(
+                            "deduplicate took \(String(format: "%.2f", dedupeElapsed))s",
+                            category: "coredata"
+                        )
+                    }
                 }
 
                 self.setHistoryToken(transactions.last!.token)
@@ -286,20 +299,24 @@ extension CoreDataManager {
     func deduplicate(objectIds: [NSManagedObjectID]) {
         let context = container.newBackgroundContext()
         context.mergePolicy = NSMergePolicy(merge: .mergeByPropertyObjectTrumpMergePolicyType)
-        context.performAndWait {
-            for objectId in objectIds {
-                deduplicate(objectId: objectId, context: context)
-            }
-            do {
-                try context.save()
-            } catch {
-                LogManager.logger.error("deduplicate: \(error.localizedDescription)")
+        // Work in batches, saving and resetting in between.
+        for batch in objectIds.chunked(into: Self.fetchBatchSize) {
+            context.performAndWait {
+                for objectId in batch {
+                    deduplicate(objectId: objectId, context: context)
+                }
+                do {
+                    try context.save()
+                } catch {
+                    LogManager.logger.error("deduplicate: \(error.localizedDescription)")
+                }
+                context.reset()
             }
         }
     }
 
     func deduplicate(objectId: NSManagedObjectID, context: NSManagedObjectContext) {
-        let object = context.object(with: objectId)
+        guard let object = try? context.existingObject(with: objectId) else { return }
 
         let request: NSFetchRequest<NSFetchRequestResult>?
 
