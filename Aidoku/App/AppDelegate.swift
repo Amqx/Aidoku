@@ -146,6 +146,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 "Reader.textFontSize": 18,
                 "Reader.textLineSpacing": 8,
                 "Reader.textHorizontalPadding": 24,
+                "Reader.textTheme": "default",
+                "Reader.textAppearance": "system",
 
                 "AutomaticBackups.googleDrive.enabled": false,
 
