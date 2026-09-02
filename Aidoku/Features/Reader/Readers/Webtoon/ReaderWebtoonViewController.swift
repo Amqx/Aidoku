@@ -146,7 +146,7 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
         }
 
         addObserver(forName: UIApplication.didReceiveMemoryWarningNotification.rawValue) { _ in
-            LogManager.logger.warn("Received memory warning in webtoon reader")
+            CrashReporter.warn("memory warning — \(String(format: "%.1f", CrashReporter.memoryFootprint))MB in use")
 
             // clear image memory cache
             ImagePipeline.shared.configuration.imageCache?.removeAll()
@@ -183,6 +183,22 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
             max(pageRow + (hasStartInfo ? 0 : 1), 0),
             currentPages.count - (hasStartInfo ? 1 : 0)
         )
+    }
+
+    /// A one-line dump of everything that has to stay in sync for the collection node not to tra
+    private var consistencySnapshot: String {
+        let nodeSections = collectionNode.numberOfSections
+        let modelItems = pages.map(\.count)
+        let nodeItems = (0..<nodeSections).map { collectionNode.numberOfItems(inSection: $0) }
+        let matches = pages.count == nodeSections && modelItems == nodeItems
+        return "model \(pages.count)\(modelItems) node \(nodeSections)\(nodeItems)"
+            + (matches ? "" : " ← MISMATCH")
+    }
+
+    /// The chapters currently backing the sections, for log lines.
+    private var chapterSnapshot: String {
+        let current = chapter.map { chapters.firstIndex(of: $0).map(String.init) ?? "not-in-list" } ?? "nil"
+        return "chapters \(chapters.map(\.key)) current \(chapter?.key ?? "nil") at \(current)"
     }
 
     private func setLiveTextButtonHidden(_ hidden: Bool) {
@@ -307,10 +323,12 @@ extension ReaderWebtoonViewController {
         if infinite {
             // check if we need to switch chapters
             if chapterIndex > 0 && pageSection < chapterIndex {
+                CrashReporter.breadcrumb("scroll crossed into section \(pageSection) (was \(chapterIndex)), moving back")
                 movePreviousChapter()
                 needsInfoRefresh = true
             } else if chapterIndex < chapters.count - 1 {
                 if pageSection > chapterIndex {
+                    CrashReporter.breadcrumb("scroll crossed into section \(pageSection) (was \(chapterIndex)), moving forward")
                     moveNextChapter()
                     needsInfoRefresh = true
                 }
@@ -472,6 +490,10 @@ extension ReaderWebtoonViewController {
         if !loadingPrevious {
             let topPath = getCurrentPagePath(pos: .top)
             if topPath == nil || (topPath?.section == 0 && topPath?.row == 0) {
+                CrashReporter.breadcrumb(
+                    "checkInfiniteLoad: prepending, top path \(topPath.map(String.init(describing:)) ?? "nil")"
+                        + " offset \(Int(collectionNode.contentOffset.y)) — \(chapterSnapshot)"
+                )
                 loadingPrevious = true
                 Task {
                     await prependPreviousChapter()
@@ -502,6 +524,10 @@ extension ReaderWebtoonViewController {
                 && lastItem - (bottomPath?.item ?? lastItem) <= pagesToPreload
 
             if atEnd || withinPreloadRange {
+                CrashReporter.breadcrumb(
+                    "checkInfiniteLoad: appending, bottom path \(bottomPath.map(String.init(describing:)) ?? "nil")"
+                        + " atEnd \(atEnd) withinPreloadRange \(withinPreloadRange) — \(chapterSnapshot)"
+                )
                 loadingNext = true
                 Task {
                     await appendNextChapter()
@@ -513,16 +539,26 @@ extension ReaderWebtoonViewController {
 
     /// Prepend the previous chapter's pages
     func prependPreviousChapter() async {
-        guard let prevChapter = delegate?.getPreviousChapter() else { return }
+        guard let prevChapter = delegate?.getPreviousChapter() else {
+            CrashReporter.breadcrumb("prepend: no previous chapter, bailing")
+            return
+        }
+        if chapters.contains(prevChapter) {
+            CrashReporter.warn("prepend: \(prevChapter.key) is ALREADY in the list — \(chapterSnapshot)")
+        }
+        CrashReporter.breadcrumb("prepend: preloading \(prevChapter.key)")
         await viewModel.preload(chapter: prevChapter)
 
         // check if pages failed to load
         if viewModel.preloadedPages.isEmpty {
+            CrashReporter.breadcrumb("prepend: \(prevChapter.key) preloaded 0 pages, bailing")
             return
         }
+        CrashReporter.breadcrumb("prepend: \(prevChapter.key) preloaded \(viewModel.preloadedPages.count) pages")
 
         // wait until zooming and scrolling stops
         while isZooming || isScrolling {
+            CrashReporter.breadcrumb("prepend: waiting (zooming \(isZooming) scrolling \(isScrolling))")
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
 
@@ -543,6 +579,8 @@ extension ReaderWebtoonViewController {
         let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
         layout?.isInsertingCellsAbove = true
 
+        CrashReporter.breadcrumb("prepend: inserting section 0 — \(consistencySnapshot)")
+
         // disable animations and adjust offset before re-enabling
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -550,6 +588,7 @@ extension ReaderWebtoonViewController {
         await collectionNode.performBatch(animated: false) {
             collectionNode.insertSections(IndexSet(integer: 0))
         }
+        CrashReporter.breadcrumb("prepend: inserted section 0 — \(consistencySnapshot)")
 //        if removeLast {
 //            chapters.removeLast()
 //            pages.removeLast()
@@ -566,17 +605,27 @@ extension ReaderWebtoonViewController {
 
     /// Append the next chapter's pages
     func appendNextChapter() async {
-        guard let nextChapter = delegate?.getNextChapter() else { return }
-        guard !chapters.contains(nextChapter) else { return }
+        guard let nextChapter = delegate?.getNextChapter() else {
+            CrashReporter.breadcrumb("append: no next chapter, bailing")
+            return
+        }
+        guard !chapters.contains(nextChapter) else {
+            CrashReporter.breadcrumb("append: \(nextChapter.key) already in the list, bailing")
+            return
+        }
+        CrashReporter.breadcrumb("append: preloading \(nextChapter.key)")
         await viewModel.preload(chapter: nextChapter)
 
         // check if pages failed to load
         if viewModel.preloadedPages.isEmpty {
+            CrashReporter.breadcrumb("append: \(nextChapter.key) preloaded 0 pages, bailing")
             return
         }
+        CrashReporter.breadcrumb("append: \(nextChapter.key) preloaded \(viewModel.preloadedPages.count) pages")
 
         // wait until zooming and scrolling stops
         while isZooming || isScrolling {
+            CrashReporter.breadcrumb("append: waiting (zooming \(isZooming) scrolling \(isScrolling))")
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
 
@@ -591,6 +640,8 @@ extension ReaderWebtoonViewController {
             index: -2
         )])
 
+        CrashReporter.breadcrumb("append: inserting section \(pages.count - 1) — \(consistencySnapshot)")
+
         // disable animations and adjust offset before re-enabling
         CATransaction.begin()
         CATransaction.setDisableActions(true)
@@ -598,6 +649,7 @@ extension ReaderWebtoonViewController {
         await collectionNode.performBatch(animated: false) {
             collectionNode.insertSections(IndexSet(integer: pages.count - 1))
         }
+        CrashReporter.breadcrumb("append: inserted — \(consistencySnapshot)")
 //        if removeFirst {
 //            chapters.removeFirst()
 //            pages.removeFirst()
@@ -617,7 +669,11 @@ extension ReaderWebtoonViewController {
             let chapterIndex = chapters.firstIndex(of: currChapter),
             let chapter = chapters[safe: chapterIndex - 1],
             let pages = pages[safe: chapterIndex - 1]
-        else { return }
+        else {
+            CrashReporter.breadcrumb("movePrevious: bailed — \(chapterSnapshot)")
+            return
+        }
+        CrashReporter.breadcrumb("movePrevious: now on \(chapter.key) (section \(chapterIndex - 1))")
         self.chapter = chapter
         delegate?.setChapter(chapter)
         delegate?.setPages(pages.filter({ $0.type == .imagePage }))
@@ -631,7 +687,11 @@ extension ReaderWebtoonViewController {
             let chapterIndex = chapters.firstIndex(of: currChapter),
             let chapter = chapters[safe: chapterIndex + 1],
             let pages = pages[safe: chapterIndex + 1]
-        else { return }
+        else {
+            CrashReporter.breadcrumb("moveNext: bailed — \(chapterSnapshot)")
+            return
+        }
+        CrashReporter.breadcrumb("moveNext: now on \(chapter.key) (section \(chapterIndex + 1))")
         self.chapter = chapter
         delegate?.setChapter(chapter)
         delegate?.setPages(pages.filter({ $0.type == .imagePage }))
@@ -649,6 +709,19 @@ extension ReaderWebtoonViewController {
                 }
             }
         }
+        let nodeSections = collectionNode.numberOfSections
+        let outOfBounds = paths.filter {
+            $0.section >= nodeSections || $0.item >= collectionNode.numberOfItems(inSection: $0.section)
+        }
+        if outOfBounds.isEmpty {
+            CrashReporter.breadcrumb("refreshInfoPages: reloading \(paths.count) paths — \(consistencySnapshot)")
+        } else {
+            CrashReporter.warn(
+                "refreshInfoPages: \(outOfBounds.count) of \(paths.count) paths are out of bounds"
+                    + " \(outOfBounds.map(String.init(describing:))) — \(consistencySnapshot)"
+            )
+        }
+
         collectionNode.performBatchUpdates {
             collectionNode.reloadItems(at: paths)
         } completion: { finished in
@@ -734,6 +807,10 @@ extension ReaderWebtoonViewController: ReaderReaderDelegate {
     }
 
     func setChapter(_ chapter: AidokuRunner.Chapter, startPage: Int) {
+        CrashReporter.note(
+            "setChapter: \(chapter.key) startPage \(startPage)"
+                + " (loadingNext \(loadingNext) loadingPrevious \(loadingPrevious)) — \(chapterSnapshot)"
+        )
         self.chapter = chapter
         chapters = [chapter]
 
@@ -769,7 +846,9 @@ extension ReaderWebtoonViewController: ReaderReaderDelegate {
                 startPage = viewModel.pages.count
             }
 
+            CrashReporter.breadcrumb("setChapter: reloading with \(pages.first?.count ?? 0) pages")
             await collectionNode.reloadData()
+            CrashReporter.breadcrumb("setChapter: reloaded — \(consistencySnapshot)")
             zoomView.adjustContentSize()
 
             // scroll to first page
@@ -790,6 +869,7 @@ extension ReaderWebtoonViewController: ASCollectionDelegate {
     func collectionNode(_ collectionNode: ASCollectionNode, didEndDisplayingItemWith node: ASCellNode) {
         guard needsInfoRefresh else { return }
         if node is ReaderWebtoonTransitionNode {
+            CrashReporter.breadcrumb("transition node left the screen, refreshing info pages")
             needsInfoRefresh = false
             refreshInfoPages()
         }
@@ -807,7 +887,11 @@ extension ReaderWebtoonViewController: ASCollectionDataSource {
         _ collectionNode: ASCollectionNode,
         numberOfItemsInSection section: Int
     ) -> Int {
-        pages[section].count
+        guard section < pages.count else {
+            CrashReporter.warn("numberOfItems asked for section \(section), model has \(pages.map(\.count))")
+            return 0
+        }
+        return pages[section].count
     }
 
     func collectionNode(
@@ -815,7 +899,13 @@ extension ReaderWebtoonViewController: ASCollectionDataSource {
         nodeBlockForItemAt indexPath: IndexPath
     ) -> ASCellNodeBlock {
         guard let chapter else { return { ASCellNode() } }
-        var page = pages[indexPath.section][indexPath.item]
+        guard
+            let sectionPages = pages[safe: indexPath.section],
+            var page = sectionPages[safe: indexPath.item]
+        else {
+            CrashReporter.warn("nodeBlock asked for \(indexPath), model has \(pages.map(\.count))")
+            return { ASCellNode() }
+        }
         if page.type == .imagePage {
             // image page
             return { [weak self] in

@@ -638,6 +638,9 @@
 "LOG_SERVER" = "Log Server";
 "EXPORT_LOGS" = "Export Logs";
 "DISPLAY_LOGS" = "Display Logs";
+"VERBOSE_LOGGING" = "Verbose Logging";
+"VERBOSE_LOGGING_TEXT" = "Record detailed reader and database activity to a log file that survives a crash.";
+"EXPORT_SESSION_LOGS" = "Export Session Logs";
 "ADVANCED" = "Advanced";
 "RESET_TEXT" = "This action is irreversible. All data, settings, and caches will be cleared and reset.";
 "CLEAR_NETWORK_CACHE" = "Clear Network Cache";

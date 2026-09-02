@@ -642,6 +642,16 @@ extension Settings {
                     key: "Logs.display",
                     title: NSLocalizedString("DISPLAY_LOGS"),
                     value: .button(.init())
+                ),
+                .init(
+                    key: "Logs.verbose",
+                    title: NSLocalizedString("VERBOSE_LOGGING"),
+                    value: .toggle(.init(subtitle: NSLocalizedString("VERBOSE_LOGGING_TEXT")))
+                ),
+                .init(
+                    key: "Logs.exportSession",
+                    title: NSLocalizedString("EXPORT_SESSION_LOGS"),
+                    value: .button(.init())
                 )
             ]))
         ),

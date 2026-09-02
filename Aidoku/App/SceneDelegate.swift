@@ -62,6 +62,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }()
 
     func sceneWillEnterForeground(_ scene: UIScene) {
+        CrashReporter.note("scene entering foreground", category: "app")
         contentHideView.removeFromSuperview()
     }
 
@@ -70,6 +71,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidEnterBackground(_ scene: UIScene) {
+        CrashReporter.note("scene entered background", category: "app")
         if AppSettings.general.incognitoMode.get() {
             (scene as? UIWindowScene)?.windows.first?.addSubview(contentHideView)
         }

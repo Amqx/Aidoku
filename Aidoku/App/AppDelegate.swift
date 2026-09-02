@@ -147,10 +147,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 "Reader.textLineSpacing": 8,
                 "Reader.textHorizontalPadding": 24,
 
-                "AutomaticBackups.googleDrive.enabled": false
+                "AutomaticBackups.googleDrive.enabled": false,
+
+                "Logs.verbose": false
             ]
         )
         AppSettings.registerDefaults()
+
+        CrashReporter.install()
 
         // PlayCover fix: eagerly initialize the Core Data stack on the main thread
         // before any background migration task touches it. The `lazy var container`

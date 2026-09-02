@@ -48,7 +48,15 @@ class ReaderWebtoonPageNode: BaseObservingCellNode {
     }
 
     var progressView: CircularProgressView {
-        (progressNode.view as? CircularProgressView)!
+        if !Thread.isMainThread {
+            CrashReporter.warn("page \(page.key): progressView touched off the main thread (\(threadDescription))")
+        }
+        return (progressNode.view as? CircularProgressView)!
+    }
+
+    /// Identifies the running thread for log lines.
+    var threadDescription: String {
+        Thread.isMainThread ? "main" : Thread.current.description
     }
 
     lazy var imageNode: GIFImageNode = {
@@ -277,6 +285,8 @@ extension ReaderWebtoonPageNode {
     func loadPage() async {
         guard image == nil, text == nil, !Task.isCancelled else { return }
 
+        CrashReporter.breadcrumb("page \(page.key): loading on \(threadDescription)", category: "page")
+
         imageNode.alpha = 0
         textNode.alpha = 0
         progressNode.isHidden = false
@@ -487,6 +497,12 @@ extension ReaderWebtoonPageNode {
             return
         }
 
+        CrashReporter.breadcrumb(
+            "page \(page.key): displaying \(image.map { "\(Int($0.size.width))×\(Int($0.size.height))" } ?? "text")"
+                + " on \(threadDescription)",
+            category: "page"
+        )
+
         if let image {
             progressNode.isHidden = true
             imageNode.image = image
@@ -526,6 +542,11 @@ extension ReaderWebtoonPageNode {
     }
 
     private func transition() {
+        // transitionLayout(with:animated:shouldMeasureAsync:) is main-thread-only in Texture, but
+        // displayPage() reaches here from loadPage(), which is not main-actor isolated.
+        if !Thread.isMainThread {
+            CrashReporter.warn("page \(page.key): transition() off the main thread (\(threadDescription))")
+        }
         let width = pageWidth
         guard width > 0 else { return }
         let ratio = if let image, image.size.width > 0 {
@@ -587,6 +608,7 @@ extension ReaderWebtoonPageNode {
     }
 
     private func handleMemoryWarning() {
+        CrashReporter.breadcrumb("page \(page.key): memory warning, visible \(isVisible)", category: "page")
         cancelLiveTextAnalysis()
 
         // remove data from non-visible pages

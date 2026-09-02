@@ -168,6 +168,14 @@ extension SettingsView {
                 }
             case "Logs.display":
                 path.push(LogViewController())
+            case "Logs.exportSession":
+                let urls = [CrashReporter.previousSessionURL, CrashReporter.currentSessionURL]
+                    .filter { $0.exists }
+                guard !urls.isEmpty else { return }
+                let vc = UIActivityViewController(activityItems: urls, applicationActivities: nil)
+                guard let sourceView = path.rootViewController?.view else { return }
+                vc.popoverPresentationController?.sourceView = sourceView
+                path.present(vc)
 
             case "Advanced.clearTrackedManga":
                 confirmAction(
