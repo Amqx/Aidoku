@@ -308,7 +308,11 @@ extension ReaderPagedViewController {
         preloadPage: Page? = nil,
         skipProcessing: Bool = false
     ) -> ReaderPageViewController {
-        let page = ReaderPageViewController(type: .page, delegate: delegate)
+        let page = ReaderPageViewController(
+            type: .page,
+            delegate: delegate,
+            temporaryPageStore: viewModel.temporaryPageStore
+        )
         page.pageView?.imageView.addInteraction(UIContextMenuInteraction(delegate: self))
         if hasImageCallbacks {
             page.onImageisWideImage = { [weak self, weak page] isWide in
