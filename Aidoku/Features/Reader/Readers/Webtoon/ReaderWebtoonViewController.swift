@@ -29,6 +29,8 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
     private lazy var infinite = UserDefaults.standard.bool(forKey: "Reader.verticalInfiniteScroll")
     // How many pages before the end of the last chapter the next one starts loading
     private lazy var pagesToPreload = UserDefaults.standard.integer(forKey: "Reader.pagesToPreload")
+    // How many chapters we allow to be held in memory
+    private let maxRetainedChapters = 3
     private var loadingPrevious = false
     private var loadingNext = false
 
@@ -204,6 +206,29 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
     /// Put the collection node back into the full preload range.
     private func restorePreloadRange() {
         (collectionNode as ASRangeControllerUpdateRangeProtocol).updateCurrentRange(with: .full)
+    }
+
+    private func canTrimSection(at index: Int) -> Bool {
+        guard
+            chapters.count > maxRetainedChapters,
+            pages.indices.contains(index),
+            chapters.indices.contains(index),
+            let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
+        else { return false }
+        if let chapter, chapters.firstIndex(of: chapter) == index { return false }
+
+        // test the section's frame against the viewport rather than sampling index paths.
+        // indexPathForItem goes nil right after a batch update, and elsewhere in this file a nil
+        // path means "past the end", so absence of one is not evidence a section is off screen
+        let height = layout.getHeightFor(section: index)
+        // an unmeasured section reports 0, which we can't tell from a real empty one, so leave it
+        guard height > 0 else { return false }
+        var minY: CGFloat = 0
+        for idx in 0..<index {
+            minY += layout.getHeightFor(section: idx)
+        }
+        let visible = CGRect(origin: collectionNode.contentOffset, size: collectionNode.bounds.size)
+        return minY + height <= visible.minY || minY >= visible.maxY
     }
 
     private func setLiveTextButtonHidden(_ hidden: Bool) {
@@ -551,27 +576,26 @@ extension ReaderWebtoonViewController {
             CrashReporter.breadcrumb("prepend: no previous chapter, bailing")
             return
         }
-        if chapters.contains(prevChapter) {
-            CrashReporter.warn("prepend: \(prevChapter.key) is ALREADY in the list — \(chapterSnapshot)")
+        guard !chapters.contains(prevChapter) else {
+            CrashReporter.breadcrumb("prepend: \(prevChapter.key) already in the list, bailing")
+            return
         }
         CrashReporter.breadcrumb("prepend: preloading \(prevChapter.key)")
-        await viewModel.preload(chapter: prevChapter)
+        // hold our own reference: an append can preload into the shared slot while we're parked
+        let preloadedPages = await viewModel.preload(chapter: prevChapter)
 
         // check if pages failed to load
-        if viewModel.preloadedPages.isEmpty {
+        if preloadedPages.isEmpty {
             CrashReporter.breadcrumb("prepend: \(prevChapter.key) preloaded 0 pages, bailing")
             return
         }
-        CrashReporter.breadcrumb("prepend: \(prevChapter.key) preloaded \(viewModel.preloadedPages.count) pages")
+        CrashReporter.breadcrumb("prepend: \(prevChapter.key) preloaded \(preloadedPages.count) pages")
 
         // wait until zooming and scrolling stops
         while isZooming || isScrolling {
             CrashReporter.breadcrumb("prepend: waiting (zooming \(isZooming) scrolling \(isScrolling))")
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
-
-        // queue remove last section if we have three already
-//        let removeLast = chapters.count >= 3
 
         chapters.insert(prevChapter, at: 0)
         pages.insert(
@@ -580,12 +604,12 @@ extension ReaderWebtoonViewController {
                 sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
                 chapterId: prevChapter.key,
                 index: -1
-            )]  + viewModel.preloadedPages,
+            )]  + preloadedPages,
             at: 0
         )
 
         let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
-        layout?.isInsertingCellsAbove = true
+        layout?.preserveOffsetAcrossChangeAbove()
 
         CrashReporter.breadcrumb("prepend: inserting section 0 — \(consistencySnapshot)")
 
@@ -597,15 +621,25 @@ extension ReaderWebtoonViewController {
             collectionNode.insertSections(IndexSet(integer: 0))
         }
         CrashReporter.breadcrumb("prepend: inserted section 0 — \(consistencySnapshot)")
-//        if removeLast {
-//            chapters.removeLast()
-//            pages.removeLast()
-//
-//            // remove last section
-//            await collectionNode.performBatchUpdates {
-//                self.collectionNode.deleteSections(IndexSet(integer: self.pages.count - 1))
-//            }
-//        }
+
+        // settle the insert's offset adjustment before the trim changes the content size again,
+        // so the two don't fold into one delta
+        collectionNode.view.layoutIfNeeded()
+
+        // trim the newest section once the window is full. it sits below the viewport, so the
+        // offset needs no adjustment. skip it while an append is in flight, since that task
+        // resumes with a chapter it resolved before parking and would leave a gap in the list
+        let trimIndex = pages.count - 1
+        if !loadingNext, canTrimSection(at: trimIndex) {
+            CrashReporter.breadcrumb("prepend: trimming section \(trimIndex) (\(chapters[trimIndex].key))")
+            chapters.removeLast()
+            pages.removeLast()
+            await collectionNode.performBatch(animated: false) {
+                collectionNode.deleteSections(IndexSet(integer: trimIndex))
+            }
+            CrashReporter.breadcrumb("prepend: trimmed — \(consistencySnapshot)")
+        }
+
         self.scrollView.contentOffset = self.collectionNode.contentOffset
         self.zoomView.adjustContentSize()
         CATransaction.commit()
@@ -622,14 +656,14 @@ extension ReaderWebtoonViewController {
             return
         }
         CrashReporter.breadcrumb("append: preloading \(nextChapter.key)")
-        await viewModel.preload(chapter: nextChapter)
+        let preloadedPages = await viewModel.preload(chapter: nextChapter)
 
         // check if pages failed to load
-        if viewModel.preloadedPages.isEmpty {
+        if preloadedPages.isEmpty {
             CrashReporter.breadcrumb("append: \(nextChapter.key) preloaded 0 pages, bailing")
             return
         }
-        CrashReporter.breadcrumb("append: \(nextChapter.key) preloaded \(viewModel.preloadedPages.count) pages")
+        CrashReporter.breadcrumb("append: \(nextChapter.key) preloaded \(preloadedPages.count) pages")
 
         // wait until zooming and scrolling stops
         while isZooming || isScrolling {
@@ -637,11 +671,8 @@ extension ReaderWebtoonViewController {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
 
-        // queue remove first section if we have three already
-//        let removeFirst = chapters.count >= 3
-
         chapters.append(nextChapter)
-        pages.append(viewModel.preloadedPages + [Page(
+        pages.append(preloadedPages + [Page(
             type: .nextInfoPage,
             sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
             chapterId: nextChapter.id,
@@ -658,13 +689,22 @@ extension ReaderWebtoonViewController {
             collectionNode.insertSections(IndexSet(integer: pages.count - 1))
         }
         CrashReporter.breadcrumb("append: inserted — \(consistencySnapshot)")
-//        if removeFirst {
-//            chapters.removeFirst()
-//            pages.removeFirst()
-//            await collectionNode.performBatchUpdates {
-//                collectionNode.deleteSections(IndexSet(integer: 0))
-//            }
-//        }
+
+        collectionNode.view.layoutIfNeeded()
+
+        if !loadingPrevious, canTrimSection(at: 0) {
+            CrashReporter.breadcrumb("append: trimming section 0 (\(chapters[0].key))")
+            // capture the pre-trim content size before the model shrinks
+            let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
+            layout?.preserveOffsetAcrossChangeAbove()
+            chapters.removeFirst()
+            pages.removeFirst()
+            await collectionNode.performBatch(animated: false) {
+                collectionNode.deleteSections(IndexSet(integer: 0))
+            }
+            CrashReporter.breadcrumb("append: trimmed — \(consistencySnapshot)")
+        }
+
         scrollView.contentOffset = self.collectionNode.contentOffset
         zoomView.adjustContentSize()
         CATransaction.commit()

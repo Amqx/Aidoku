@@ -11,12 +11,13 @@ import AsyncDisplayKit
 
 class VerticalContentOffsetPreservingLayout: UICollectionViewFlowLayout {
 
-    var isInsertingCellsAbove: Bool = false {
-        didSet {
-            if isInsertingCellsAbove {
-                contentSizeBeforeInsertingAbove = collectionViewContentSize
-            }
+    private(set) var isChangingCellsAbove: Bool = false
+
+    func preserveOffsetAcrossChangeAbove() {
+        if contentSizeBeforeChangingAbove == nil {
+            contentSizeBeforeChangingAbove = collectionViewContentSize
         }
+        isChangingCellsAbove = true
     }
 
     var spacing: CGFloat {
@@ -24,7 +25,7 @@ class VerticalContentOffsetPreservingLayout: UICollectionViewFlowLayout {
         set { minimumLineSpacing = newValue }
     }
 
-    private var contentSizeBeforeInsertingAbove: CGSize?
+    private var contentSizeBeforeChangingAbove: CGSize?
     private var scale: CGFloat = 1
 
     private var contentSize = CGSize.zero
@@ -99,9 +100,9 @@ class VerticalContentOffsetPreservingLayout: UICollectionViewFlowLayout {
             }
         }
 
-        // preserve offset when inserting cells above
-        if isInsertingCellsAbove {
-            if let oldContentSize = contentSizeBeforeInsertingAbove {
+        // preserve offset when cells above the viewport are added or removed
+        if isChangingCellsAbove {
+            if let oldContentSize = contentSizeBeforeChangingAbove {
                 UIView.performWithoutAnimation {
                     let newContentSize = collectionViewContentSize
                     let contentOffsetX = collectionView.contentOffset.x + (newContentSize.width - oldContentSize.width)
@@ -110,8 +111,8 @@ class VerticalContentOffsetPreservingLayout: UICollectionViewFlowLayout {
                     collectionView.contentOffset = newOffset
                 }
             }
-            contentSizeBeforeInsertingAbove = nil
-            isInsertingCellsAbove = false
+            contentSizeBeforeChangingAbove = nil
+            isChangingCellsAbove = false
         }
     }
 
