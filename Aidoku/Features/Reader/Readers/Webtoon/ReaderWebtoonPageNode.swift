@@ -30,6 +30,7 @@ class ReaderWebtoonPageNode: BaseObservingCellNode {
     var ratio: CGFloat?
 
     private var pageLoadTask: Task<Void, Never>?
+    private var pageLoadGeneration = 0
     private var imageTask: ImageTask?
     private var imageProcessingTask: Task<UIImage?, Never>?
 
@@ -47,16 +48,28 @@ class ReaderWebtoonPageNode: BaseObservingCellNode {
         calculatedSize.width
     }
 
+    @MainActor
     var progressView: CircularProgressView {
-        if !Thread.isMainThread {
-            CrashReporter.warn("page \(page.key): progressView touched off the main thread (\(threadDescription))")
-        }
-        return (progressNode.view as? CircularProgressView)!
+        (progressNode.view as? CircularProgressView)!
     }
 
     /// Identifies the running thread for log lines.
     var threadDescription: String {
         Thread.isMainThread ? "main" : Thread.current.description
+    }
+
+    /// Runs a main-actor block, synchronously when the caller is already on the main thread.
+    ///
+    /// Texture delivers its interface-state callbacks on the main thread, so hopping through
+    /// a `Task` there doesn't move work off main, it only defers it to a later main-actor
+    /// turn. That lets a deferred enter callback run after the exit callbacks that were
+    /// meant to supersede it.
+    static func runOnMain(_ block: @MainActor @escaping () -> Void) {
+        if Thread.isMainThread {
+            MainActor.assumeIsolated(block)
+        } else {
+            DispatchQueue.main.async { MainActor.assumeIsolated(block) }
+        }
     }
 
     lazy var imageNode: GIFImageNode = {
@@ -88,20 +101,30 @@ class ReaderWebtoonPageNode: BaseObservingCellNode {
         shouldAnimateSizeChanges = false
 
         addObserver(forName: "Reader.pillarbox") { [weak self] notification in
-            self?.pillarbox = notification.object as? Bool ?? false
-            self?.transition()
+            let value = notification.object as? Bool ?? false
+            Self.runOnMain { [weak self] in
+                self?.pillarbox = value
+                self?.transition()
+            }
         }
         addObserver(forName: "Reader.pillarboxAmount") { [weak self] notification in
             guard let doubleValue = notification.object as? Double else { return }
-            self?.pillarboxAmount = CGFloat(doubleValue)
-            self?.transition()
+            Self.runOnMain { [weak self] in
+                self?.pillarboxAmount = CGFloat(doubleValue)
+                self?.transition()
+            }
         }
         addObserver(forName: "Reader.pillarboxOrientation") { [weak self] notification in
-            self?.pillarboxOrientation = notification.object as? String ?? "both"
-            self?.transition()
+            let value = notification.object as? String ?? "both"
+            Self.runOnMain { [weak self] in
+                self?.pillarboxOrientation = value
+                self?.transition()
+            }
         }
         addObserver(forName: UIApplication.didReceiveMemoryWarningNotification.rawValue) { [weak self] _ in
-            self?.handleMemoryWarning()
+            Self.runOnMain { [weak self] in
+                self?.handleMemoryWarning()
+            }
         }
     }
 
@@ -111,40 +134,50 @@ class ReaderWebtoonPageNode: BaseObservingCellNode {
 
     override func didEnterPreloadState() {
         super.didEnterPreloadState()
-        startPageLoad()
+        Self.runOnMain { [weak self] in
+            self?.startPageLoad()
+        }
     }
 
     override func didExitPreloadState() {
         super.didExitPreloadState()
-        cancelPageLoad()
+        Self.runOnMain { [weak self] in
+            self?.cancelPageLoad()
+        }
     }
 
     override func didEnterVisibleState() {
         super.didEnterVisibleState()
-        displayPage()
+        Self.runOnMain { [weak self] in
+            self?.displayPage()
+        }
     }
 
     override func didEnterDisplayState() {
         super.didEnterDisplayState()
-        displayPage()
+        Self.runOnMain { [weak self] in
+            self?.displayPage()
+        }
     }
 
     override func didExitDisplayState() {
         super.didExitDisplayState()
-        guard !isVisible else { return }
+        Self.runOnMain { [weak self] in
+            guard let self, !self.isVisible else { return }
 
-        // don't hide images if zooming in/out
-        if let delegate, delegate.isZooming {
-            return
+            // don't hide images if zooming in/out
+            if let delegate = self.delegate, delegate.isZooming {
+                return
+            }
+
+            self.cancelLiveTextAnalysis()
+            self.clearDisplayedImage()
+
+            self.text = nil
+            self.imageNode.alpha = 0
+            self.textNode.alpha = 0
+            self.progressNode.isHidden = false
         }
-
-        cancelLiveTextAnalysis()
-        clearDisplayedImage()
-
-        text = nil
-        imageNode.alpha = 0
-        textNode.alpha = 0
-        progressNode.isHidden = false
     }
 
     override func animateLayoutTransition(_ context: ASContextTransitioning) {
@@ -261,16 +294,24 @@ extension ReaderWebtoonPageNode {
 }
 
 extension ReaderWebtoonPageNode {
+    @MainActor
     private func startPageLoad() {
         guard pageLoadTask == nil, image == nil, text == nil else { return }
 
-        pageLoadTask = Task { [weak self] in
+        pageLoadGeneration &+= 1
+        let generation = pageLoadGeneration
+
+        pageLoadTask = Task { @MainActor [weak self] in
             guard let self else { return }
             await self.loadPage()
+            // a cancel and restart while this task was suspended has already replaced
+            // the handle, so only clear the one this task actually owns
+            guard self.pageLoadGeneration == generation else { return }
             self.pageLoadTask = nil
         }
     }
 
+    @MainActor
     private func cancelPageLoad() {
         pageLoadTask?.cancel()
         pageLoadTask = nil
@@ -282,6 +323,7 @@ extension ReaderWebtoonPageNode {
         imageProcessingTask = nil
     }
 
+    @MainActor
     func loadPage() async {
         guard image == nil, text == nil, !Task.isCancelled else { return }
 
@@ -310,14 +352,23 @@ extension ReaderWebtoonPageNode {
         }
     }
 
-    private func loadImage(url: URL, context: PageContext?) async {
+    /// Builds and starts the pipeline request off the main actor.
+    ///
+    /// Reading the reader defaults, building the processor chain and `loadImage`'s own
+    /// memory-cache probe are all synchronous. Running them on the main actor means a
+    /// preload isn't even *issued* while the main thread is busy laying out a fast
+    /// scroll, which is the opposite of what the preload range exists for.
+    private nonisolated func startImageRequest(
+        url: URL,
+        context: PageContext?,
+        width: CGFloat
+    ) async -> (ImageRequest, ImageTask) {
         let urlRequest = if !url.isFileURL, let source {
             await source.getModifiedImageRequest(url: url, context: context)
         } else {
             URLRequest(url: url)
         }
 
-        let width = pageWidth
         let shouldDownsample = UserDefaults.standard.bool(forKey: "Reader.downsampleImages") && width > 0
         let shouldUpscale = UserDefaults.standard.bool(forKey: "Reader.upscaleImages")
         let shouldCropBorders = UserDefaults.standard.bool(forKey: "Reader.cropBorders")
@@ -347,19 +398,33 @@ extension ReaderWebtoonPageNode {
             userInfo: [.processesKey: usePageProcessor]
         )
 
-        // Store current image request for reload functionality
-        self.currentImageRequest = request
-
         let imageTask = ImagePipeline.shared.loadImage(
             with: request,
-            progress: { [weak progressView] _, completed, total in
-                guard let progressView else { return }
-                Task { @MainActor in
-                    progressView.setProgress(value: Float(completed) / Float(total), withAnimation: false)
+            progress: { [weak self] _, completed, total in
+                Task { @MainActor [weak self] in
+                    self?.progressView.setProgress(
+                        value: Float(completed) / Float(total),
+                        withAnimation: false
+                    )
                 }
             },
             completion: { _ in }
         )
+
+        return (request, imageTask)
+    }
+
+    @MainActor
+    private func loadImage(url: URL, context: PageContext?) async {
+        let (request, imageTask) = await startImageRequest(url: url, context: context, width: pageWidth)
+
+        guard !Task.isCancelled else {
+            imageTask.cancel()
+            return
+        }
+
+        // Store current image request for reload functionality
+        self.currentImageRequest = request
         self.imageTask = imageTask
 
         do {
@@ -404,10 +469,11 @@ extension ReaderWebtoonPageNode {
             }
 
             // TODO: handle failure
-            await self.progressView.setProgress(value: 0, withAnimation: true)
+            progressView.setProgress(value: 0, withAnimation: true)
         }
     }
 
+    @MainActor
     private func loadImage(base64: String) async {
         let fullKey = "\(page.key)-\(ImageProcessingSettingsKey.getProcessorSettingsKey())"
         let request = ImageRequest(
@@ -421,10 +487,13 @@ extension ReaderWebtoonPageNode {
 
         progressNode.isHidden = false
 
-        // check cache
-        if ImagePipeline.shared.cache.containsCachedImage(for: request) {
-            let imageContainer = ImagePipeline.shared.cache.cachedImage(for: request)
-            image = imageContainer?.image
+        // check the cache off the main actor: a memory-cache miss falls through to a
+        // synchronous disk read and decode
+        let cached = await Task.detached {
+            ImagePipeline.shared.cache.cachedImage(for: request)
+        }.value
+        if let cached {
+            image = cached.image
             if isNodeLoaded {
                 displayPage()
             }
@@ -467,13 +536,19 @@ extension ReaderWebtoonPageNode {
         self.imageProcessingTask = nil
         guard !Task.isCancelled, let image else { return }
 
-        ImagePipeline.shared.cache.storeCachedImage(ImageContainer(image: image), for: request)
+        // storing re-encodes the full-resolution image synchronously, so keep it off main
+        let container = ImageContainer(image: image)
+        Task.detached {
+            ImagePipeline.shared.cache.storeCachedImage(container, for: request)
+        }
+
         self.image = image
         if isNodeLoaded {
             displayPage()
         }
     }
 
+    @MainActor
     private func loadImage(zipURL: URL, filePath: String) async {
         guard let extractedURL = await self.temporaryPageStore.storeArchiveEntry(
             from: zipURL,
@@ -484,6 +559,7 @@ extension ReaderWebtoonPageNode {
         await loadImage(url: extractedURL, context: nil)
     }
 
+    @MainActor
     private func loadText(_ text: String) {
         self.text = text
         if isNodeLoaded {
@@ -491,6 +567,7 @@ extension ReaderWebtoonPageNode {
         }
     }
 
+    @MainActor
     func displayPage() {
         guard text != nil || image != nil else {
             startPageLoad()
@@ -536,17 +613,14 @@ extension ReaderWebtoonPageNode {
         transition()
     }
 
+    @MainActor
     private func clearDisplayedImage() {
         imageNode.reset()
         image = nil
     }
 
+    @MainActor
     private func transition() {
-        // transitionLayout(with:animated:shouldMeasureAsync:) is main-thread-only in Texture, but
-        // displayPage() reaches here from loadPage(), which is not main-actor isolated.
-        if !Thread.isMainThread {
-            CrashReporter.warn("page \(page.key): transition() off the main thread (\(threadDescription))")
-        }
         let width = pageWidth
         guard width > 0 else { return }
         let ratio = if let image, image.size.width > 0 {
@@ -607,6 +681,7 @@ extension ReaderWebtoonPageNode {
         }
     }
 
+    @MainActor
     private func handleMemoryWarning() {
         CrashReporter.breadcrumb("page \(page.key): memory warning, visible \(isVisible)", category: "page")
         cancelLiveTextAnalysis()
