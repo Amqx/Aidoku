@@ -201,6 +201,11 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
         return "chapters \(chapters.map(\.key)) current \(chapter?.key ?? "nil") at \(current)"
     }
 
+    /// Put the collection node back into the full preload range.
+    private func restorePreloadRange() {
+        (collectionNode as ASRangeControllerUpdateRangeProtocol).updateCurrentRange(with: .full)
+    }
+
     private func setLiveTextButtonHidden(_ hidden: Bool) {
         collectionNode.visibleNodes.forEach {
             guard let pageNode = $0 as? ReaderWebtoonPageNode else { return }
@@ -273,6 +278,8 @@ extension ReaderWebtoonViewController {
             return
         }
 
+        restorePreloadRange()
+
         let speed = max(UserDefaults.standard.integer(forKey: "Reader.autoScrollSpeed"), 1)
         let distance = CGFloat(speed * 100) * CGFloat(displayLink.timestamp - previousTimestamp)
         let minimumY = -scrollView.adjustedContentInset.top
@@ -299,6 +306,7 @@ extension ReaderWebtoonViewController {
 extension ReaderWebtoonViewController {
     override func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         super.scrollViewWillBeginDragging(scrollView)
+        restorePreloadRange()
         pauseAutoScroll()
         setLiveTextButtonHidden(true)
     }
