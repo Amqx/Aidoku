@@ -14,7 +14,7 @@ This fork will have a couple UI/ UX changes that I have made for personal prefer
 
 ## Installation
 
-You have to sideload it. I'm not providing unsigned binaries either so go build it yourself with XCode or ask AI to write a workflow for you to build one.
+You have to sideload it. You can grab a latest nightly UNSIGNED ipa from releases.
 
 ## Stability
 I highly recommend you use [upstream](https://github.com/Aidoku/Aidoku) if you want a more stable experience. This fork of mine may have
