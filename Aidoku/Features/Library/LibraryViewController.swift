@@ -408,10 +408,7 @@ class LibraryViewController: OldMangaCollectionViewController {
         addObserver(forName: .updateHistory) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
-                await self.viewModel.fetchUnreads()
-                if self.viewModel.pinType != .unread {
-                    await self.viewModel.loadLibrary()
-                }
+                await self.viewModel.loadLibrary()
                 self.updateDataSource()
             }
         }

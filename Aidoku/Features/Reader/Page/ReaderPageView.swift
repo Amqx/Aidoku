@@ -13,6 +13,19 @@ import SwiftUI
 import VisionKit
 import ZIPFoundation
 
+private enum ReaderPageDiskCacheWriter {
+    private static let queue = DispatchQueue(label: "ReaderPageDiskCacheWriter", qos: .utility)
+    private static let slots = DispatchSemaphore(value: 4)
+
+    static func store(_ container: Nuke.ImageContainer, for request: Nuke.ImageRequest) {
+        guard slots.wait(timeout: .now()) == .success else { return }
+        queue.async {
+            defer { slots.signal() }
+            ImagePipeline.shared.cache.storeCachedImage(container, for: request, caches: [.disk])
+        }
+    }
+}
+
 class ReaderPageView: UIView {
     weak var parent: UIViewController?
 
@@ -297,9 +310,12 @@ class ReaderPageView: UIView {
         progressView.isHidden = false
         defer { progressView.isHidden = true }
 
-        if ImagePipeline.shared.cache.containsCachedImage(for: request) {
-            let imageContainer = ImagePipeline.shared.cache.cachedImage(for: request)
-            imageView.image = imageContainer?.image
+        // A memory-cache miss can fall through to a synchronous disk read and decode.
+        let cached = await Task.detached {
+            ImagePipeline.shared.cache.cachedImage(for: request)
+        }.value
+        if let cached {
+            imageView.image = cached.image
             fixImageSize()
             startLiveTextAnalysis()
             return true
@@ -335,7 +351,10 @@ class ReaderPageView: UIView {
         }.value
         guard let image else { return false }
 
-        ImagePipeline.shared.cache.storeCachedImage(ImageContainer(image: image), for: request)
+        // Storing can synchronously re-encode the image for the disk cache.
+        let container = ImageContainer(image: image)
+        ImagePipeline.shared.cache.storeCachedImage(container, for: request, caches: [.memory])
+        ReaderPageDiskCacheWriter.store(container, for: request)
         imageView.image = image
         fixImageSize()
         startLiveTextAnalysis()

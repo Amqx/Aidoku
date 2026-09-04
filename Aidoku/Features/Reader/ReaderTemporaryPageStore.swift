@@ -89,7 +89,9 @@ actor ReaderTemporaryPageStore {
     }
 
     func removeAll() {
+        extractedArchiveEntries.removeAll()
         directory.removeItem()
+        directory.createDirectory()
     }
 
     static func removeAllSessions() {

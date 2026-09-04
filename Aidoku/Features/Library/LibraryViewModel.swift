@@ -207,6 +207,9 @@ extension LibraryViewModel {
     func loadLibrary() async {
         // handle filter groups
         let filters = self.activeFilters
+        let unappliedFilters = filters.filter { filter in
+            filter.type == .downloaded || filter.type == .hasUnread
+        }
         let currentCategory = (isInUncategorizedCategory || isInRealCategory) ? self.currentCategory : nil
 
         let (
@@ -214,13 +217,11 @@ extension LibraryViewModel {
             actuallyEmpty,
             pinnedManga,
             manga,
-            sourceKeys,
-            unappliedFilters
+            sourceKeys
         ) = await CoreDataManager.shared.container.performBackgroundTask { @Sendable [sortMethod, sortAscending, pinType] context in
             var pinnedManga: [MangaInfo] = []
             var manga: [MangaInfo] = []
             var sourceKeys: Set<String> = []
-            var unappliedFilters: [LibraryFilter] = []
 
             let request = LibraryMangaObject.fetchRequest()
             if let currentCategory {
@@ -241,7 +242,7 @@ extension LibraryViewModel {
                 ]
             }
             guard let libraryObjects = try? context.fetch(request) else {
-                return (false, true, pinnedManga, manga, sourceKeys, unappliedFilters)
+                return (false, true, pinnedManga, manga, sourceKeys)
             }
 
             let actuallyEmpty = libraryObjects.isEmpty
@@ -277,7 +278,6 @@ extension LibraryViewModel {
                     let condition: Bool
                     switch filter.type {
                         case .downloaded:
-                            unappliedFilters.append(filter)
                             continue
                         case .tracking:
                             condition = CoreDataManager.shared.hasTrack(
@@ -285,7 +285,6 @@ extension LibraryViewModel {
                                 context: context
                             )
                         case .hasUnread:
-                            unappliedFilters.append(filter)
                             continue
                         case .started:
                             condition = CoreDataManager.shared.hasHistory(
@@ -353,7 +352,7 @@ extension LibraryViewModel {
                 }
             }
 
-            return (true, actuallyEmpty, pinnedManga, manga, sourceKeys, unappliedFilters)
+            return (true, actuallyEmpty, pinnedManga, manga, sourceKeys)
         }
 
         guard success else { return }
@@ -477,25 +476,34 @@ extension LibraryViewModel {
         let currentManga = self.manga + self.pinnedManga
 
         // fetch new unread counts
-        let unreadCounts = await withTaskGroup(of: (Int, Int).self) { group in
-            var unreadCounts: [Int: Int] = [:]
-            for manga in currentManga {
+        let maximumContextCount = 4
+        let chunkSize = max(1, (currentManga.count + maximumContextCount - 1) / maximumContextCount)
+        let unreadCounts = await withTaskGroup(of: [Int: Int].self) { group in
+            for startIndex in stride(from: 0, to: currentManga.count, by: chunkSize) {
+                let endIndex = min(startIndex + chunkSize, currentManga.count)
+                let mangaChunk = Array(currentManga[startIndex..<endIndex])
                 group.addTask {
-                    let context = CoreDataManager.shared.container.newBackgroundContext()
-                    return context.performAndWait {
-                        let filters = CoreDataManager.shared.getMangaChapterFilters(mangaId: manga.id, context: context)
-                        let count = CoreDataManager.shared.unreadCount(
-                            mangaId: manga.id,
-                            lang: filters.language,
-                            scanlators: filters.scanlators,
-                            context: context
-                        )
-                        return (manga.hashValue, count)
+                    await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
+                        var unreadCounts: [Int: Int] = [:]
+                        for manga in mangaChunk {
+                            let filters = CoreDataManager.shared.getMangaChapterFilters(
+                                mangaId: manga.id,
+                                context: context
+                            )
+                            unreadCounts[manga.hashValue] = CoreDataManager.shared.unreadCount(
+                                mangaId: manga.id,
+                                lang: filters.language,
+                                scanlators: filters.scanlators,
+                                context: context
+                            )
+                        }
+                        return unreadCounts
                     }
                 }
             }
-            for await (key, count) in group {
-                unreadCounts[key] = count
+            var unreadCounts: [Int: Int] = [:]
+            for await chunkUnreadCounts in group {
+                unreadCounts.merge(chunkUnreadCounts) { _, new in new }
             }
             return unreadCounts
         }
