@@ -35,10 +35,13 @@ jobs:
           xcrun simctl list > /dev/null
           xcodebuild -downloadPlatform iOS
 
-      - name: Install xcbeautify
+      - name: Install build tools
         run: |
           if ! command -v xcbeautify > /dev/null 2>&1; then
             brew install xcbeautify
+          fi
+          if ! command -v swiftlint > /dev/null 2>&1; then
+            brew install swiftlint
           fi
 
       - name: Build unsigned IPA
