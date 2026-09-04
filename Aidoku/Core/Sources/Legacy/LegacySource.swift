@@ -34,7 +34,7 @@ extension AidokuRunner.Source {
 }
 
 final class LegacySourceRunner: AidokuRunner.Runner {
-    let source: Source
+    nonisolated(unsafe) let source: Source
 
     let features: SourceFeatures
 
