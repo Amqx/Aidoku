@@ -23,7 +23,7 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
         }
     }
 
-//    private let prefetcher = ImagePrefetcher()
+    private let pillarboxLayoutState = ReaderPillarboxLayoutState()
 
     // Indicates if infinite scroll is enabled
     private lazy var infinite = UserDefaults.standard.bool(forKey: "Reader.verticalInfiniteScroll")
@@ -392,7 +392,15 @@ extension ReaderWebtoonViewController {
     // TODO: fix scroll offset when rotating
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to: size, with: coordinator)
-        coordinator.animate { _ in
+
+        coordinator.animate { [weak self] _ in
+            guard let self else { return }
+
+            let isPortrait = self.view.bounds.height >= self.view.bounds.width
+            pillarboxLayoutState.setIsPortrait(isPortrait)
+
+            self.collectionNode.invalidateCalculatedLayout()
+            self.collectionNode.collectionViewLayout.invalidateLayout()
             self.zoomView.adjustContentSize()
         }
     }
@@ -969,7 +977,8 @@ extension ReaderWebtoonViewController: ASCollectionDataSource {
                 let cell = ReaderWebtoonPageNode(
                     source: self.viewModel.source,
                     page: page,
-                    temporaryPageStore: temporaryPageStore
+                    temporaryPageStore: temporaryPageStore,
+                    pillarboxLayoutState: self.pillarboxLayoutState
                 )
                 cell.delegate = self
                 return cell
@@ -990,11 +999,14 @@ extension ReaderWebtoonViewController: ASCollectionDataSource {
                 ? self.delegate?.getPreviousChapter()
                 : self.delegate?.getNextChapter()
             return {
-                ReaderWebtoonTransitionNode(transition: .init(
-                    type: page.type == .prevInfoPage ? .prev : .next,
-                    from: chapter,
-                    to: to
-                ))
+                ReaderWebtoonTransitionNode(
+                    transition: .init(
+                        type: page.type == .prevInfoPage ? .prev : .next,
+                        from: chapter,
+                        to: to
+                    ),
+                    pillarboxLayoutState: self.pillarboxLayoutState
+                )
             }
         }
     }
