@@ -167,6 +167,13 @@ final class CoreDataManager: @unchecked Sendable {
         }
     }
 
+    func queueClear<T: NSManagedObject>(request: NSFetchRequest<T>, context: NSManagedObjectContext) {
+        let objects = (try? context.fetch(request)) ?? []
+        for object in objects {
+            context.delete(object)
+        }
+    }
+
     @MainActor
     func updateCloudConfiguration() {
         let usesCloudKitMirroring = Self.shouldUseiCloud
