@@ -403,6 +403,13 @@ class LibraryViewController: OldMangaCollectionViewController {
             }
             self?.reloadItems()
         }
+        addObserver(forName: .filteredChapters) { [weak self] notification in
+            guard let self, let id = notification.object as? MangaIdentifier else { return }
+            Task {
+                await self.viewModel.fetchUnreads(for: id)
+                self.updateDataSource()
+            }
+        }
 
         // update history
         addObserver(forName: .updateHistory) { [weak self] _ in

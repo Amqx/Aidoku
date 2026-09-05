@@ -904,5 +904,6 @@ extension MangaView.ViewModel {
         manga.langFilter = chapterLangFilter
         manga.scanlatorFilter = chapterScanlatorFilter
         await CoreDataManager.shared.updateMangaDetails(manga: manga)
+        NotificationCenter.default.post(name: .filteredChapters, object: manga.identifier)
     }
 }
