@@ -74,10 +74,18 @@ class ReaderViewController: BaseObservingViewController {
 
         let button = UIButton(configuration: configuration)
         button.addTarget(self, action: #selector(toggleAutoScroll), for: .touchUpInside)
+        button.addTarget(self, action: #selector(autoScrollButtonTouchDown), for: .touchDown)
+        button.addTarget(
+            self,
+            action: #selector(autoScrollButtonTouchEnded),
+            for: [.touchUpInside, .touchUpOutside, .touchCancel]
+        )
         button.translatesAutoresizingMaskIntoConstraints = false
         button.isHidden = true
         return button
     }()
+    private var isInteractingWithAutoScrollButton = false
+
     private lazy var descriptionButtonController: UIHostingController<ReaderPageDescriptionButtonView> = {
         let buttonView = ReaderPageDescriptionButtonView(source: source, pages: [])
         let hostingController = UIHostingController(rootView: buttonView)
@@ -651,34 +659,6 @@ extension ReaderViewController {
         }
     }
 
-    @objc private func toggleAutoScroll() {
-        guard let webtoonReader = reader as? ReaderWebtoonViewController else { return }
-        webtoonReader.toggleAutoScroll()
-    }
-
-    private func updateAutoScrollButton() {
-        let webtoonReader = reader as? ReaderWebtoonViewController
-        let visible = webtoonReader != nil && UserDefaults.standard.bool(forKey: "Reader.autoScroll")
-
-        if !visible {
-            webtoonReader?.stopAutoScroll()
-        }
-
-        webtoonReader?.onAutoScrollStateChange = { [weak self] _ in
-            self?.updateAutoScrollButtonIcon()
-        }
-
-        autoScrollButton.isHidden = !visible
-        descriptionTrailingConstraint.isActive = !visible
-        descriptionTrailingToAutoScrollConstraint.isActive = visible
-        updateAutoScrollButtonIcon()
-    }
-
-    private func updateAutoScrollButtonIcon() {
-        let isAutoScrolling = (reader as? ReaderWebtoonViewController)?.isAutoScrolling == true
-        autoScrollButton.configuration?.image = UIImage(systemName: isAutoScrolling ? "pause.fill" : "play.fill")
-    }
-
     func setReader(_ type: Reader) {
         let pageController: ReaderReaderDelegate?
         switch type {
@@ -788,6 +768,65 @@ extension ReaderViewController {
                 labels[0].textColor = titleColor?.withAlphaComponent(0.6) ?? .secondaryLabel
                 labels[1].textColor = titleColor ?? .label
             }
+        }
+    }
+}
+
+// MARK: - Auto Scroll
+extension ReaderViewController {
+    @objc private func toggleAutoScroll() {
+        guard let webtoonReader = reader as? ReaderWebtoonViewController else { return }
+        webtoonReader.toggleAutoScroll()
+    }
+
+    private func updateAutoScrollButton() {
+        let webtoonReader = reader as? ReaderWebtoonViewController
+        let visible = webtoonReader != nil && UserDefaults.standard.bool(forKey: "Reader.autoScroll")
+
+        if !visible {
+            webtoonReader?.stopAutoScroll()
+        }
+
+        webtoonReader?.onAutoScrollStateChange = { [weak self] _ in
+            self?.updateAutoScrollButtonIcon()
+        }
+        webtoonReader?.onContentScrollingChange = { [weak self] isScrolling in
+            self?.setAutoScrollButtonDimmed(isScrolling)
+        }
+
+        autoScrollButton.isHidden = !visible
+        descriptionTrailingConstraint.isActive = !visible
+        descriptionTrailingToAutoScrollConstraint.isActive = visible
+        updateAutoScrollButtonIcon()
+    }
+
+    private func updateAutoScrollButtonIcon() {
+        let isAutoScrolling = (reader as? ReaderWebtoonViewController)?.isAutoScrolling == true
+        autoScrollButton.configuration?.image = UIImage(systemName: isAutoScrolling ? "pause.fill" : "play.fill")
+    }
+
+    @objc private func autoScrollButtonTouchDown() {
+        isInteractingWithAutoScrollButton = true
+        setAutoScrollButtonDimmed(false)
+    }
+
+    @objc private func autoScrollButtonTouchEnded() {
+        isInteractingWithAutoScrollButton = false
+        let isScrolling = (reader as? ReaderWebtoonViewController)?.isContentScrolling ?? false
+        setAutoScrollButtonDimmed(isScrolling)
+    }
+
+    private func setAutoScrollButtonDimmed(_ dimmed: Bool) {
+        let alpha: CGFloat = dimmed && !isInteractingWithAutoScrollButton ? 0.5 : 1
+
+        guard autoScrollButton.alpha != alpha else { return }
+
+        UIView.animate(
+            withDuration: 0.2,
+            delay: 0,
+            options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseInOut]
+        ) {
+            self.autoScrollButton.alpha = alpha
         }
     }
 }
