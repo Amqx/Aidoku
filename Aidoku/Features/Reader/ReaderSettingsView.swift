@@ -16,6 +16,7 @@ struct ReaderSettingsView: View {
     @StateObject private var downsampleImages = UserDefaultsBool(key: "Reader.downsampleImages")
     @StateObject private var upscaleImages = UserDefaultsBool(key: "Reader.upscaleImages")
     @StateObject private var splitWideImages = UserDefaultsBool(key: "Reader.splitWideImages")
+    @StateObject private var autoScroll = UserDefaultsBool(key: "Reader.autoScroll")
 
     // All available font families on the system
     private static let availableFonts: [String] = {
@@ -340,14 +341,27 @@ extension ReaderSettingsView {
                     value: .toggle(.init())
                 )
             )
-            SettingView(
-                setting: .init(
-                    key: "Reader.autoScrollSpeed",
-                    title: NSLocalizedString("AUTO_SCROLL_SPEED"),
-                    requires: "Reader.autoScroll",
-                    value: .stepper(.init(minimumValue: 1, maximumValue: 10, stepValue: 1))
+            if autoScroll.value {
+                SettingView(
+                    setting: .init(
+                        key: "Reader.autoScrollSpeed",
+                        title: NSLocalizedString("AUTO_SCROLL_SPEED"),
+                        requires: "Reader.autoScroll",
+                        value: .stepper(.init(minimumValue: 1, maximumValue: 10, stepValue: 1))
+                    )
                 )
-            )
+                SettingView(
+                    setting: .init(
+                        key: AppSettings.reader.autoScrollPosition.key,
+                        title: NSLocalizedString("AUTO_SCROLL_POSITION"),
+                        requires: "Reader.autoScroll",
+                        value: .select(.init(
+                            values: ReaderSettings.AutoScrollPosition.allCases.map { $0.rawValue },
+                            titles: ReaderSettings.AutoScrollPosition.allCases.map { $0.title }
+                        ))
+                    )
+                )
+            }
             SettingView(
                 setting: .init(
                     key: "Reader.pillarbox",
