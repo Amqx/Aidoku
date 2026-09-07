@@ -819,7 +819,7 @@ extension ReaderTextViewController: ReaderReaderDelegate {
         let offsetInSection = scrollView.contentOffset.y - startY
         let progress = min(1, max(0, offsetInSection / (height - screenHeight)))
         let page = min(estimatedPageCount, Int(progress * CGFloat(estimatedPageCount)) + 1)
-        delegate?.setCurrentPage(page, position: nil)
+        delegate?.setCurrentPage(page, position: Double(progress))
     }
 
     func setChapter(_ chapter: AidokuRunner.Chapter, startPage: Int) {

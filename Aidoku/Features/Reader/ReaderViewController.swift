@@ -448,23 +448,28 @@ extension ReaderViewController {
         }
     }
 
-    func updateReadPosition(
-        currentPage: Int? = nil,
-        totalPages: Int? = nil,
-        chapter: AidokuRunner.Chapter? = nil
-    ) async {
-        let effectiveTotalPages = totalPages ?? toolbarView.totalPages ?? 0
-        let effectiveCurrentPage = currentPage ?? self.currentPage
+    func updateReadPosition() async {
+        await updateReadPosition(
+            currentPage: currentPage,
+            totalPages: toolbarView.totalPages,
+            chapter: chapter,
+            scrollPosition: currentPosition
+        )
+    }
 
+    private func updateReadPosition(
+        currentPage: Int,
+        totalPages: Int?,
+        chapter: AidokuRunner.Chapter,
+        scrollPosition: Double?
+    ) async {
         guard
             !AppSettings.general.incognitoMode.get(),
-            effectiveTotalPages > 0 // ensure chapter pages are loaded
+            currentPage >= 1,
+            let totalPages, totalPages > 0 // ensure chapter pages are loaded
         else {
             return
         }
-
-        let currentPage = effectiveCurrentPage
-        let chapter = chapter ?? self.chapter
 
         let chapterId = ChapterIdentifier(sourceKey: manga.sourceKey, mangaKey: manga.key, chapterKey: chapter.key)
         let (completed, progress) = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
@@ -475,8 +480,8 @@ extension ReaderViewController {
         }
         let hasHistory = completed || progress != nil
 
-        // don't add history if there is none and we're at the first page
-        if currentPage == 1 && !hasHistory {
+        // Don't add history until the reader has moved beyond the start of the chapter.
+        if currentPage == 1 && !hasHistory && (scrollPosition ?? 0) <= 0 {
             return
         }
 
@@ -485,7 +490,7 @@ extension ReaderViewController {
             chapter: chapter,
             progress: currentPage,
             totalPages: totalPages,
-            scrollPosition: currentPosition,
+            scrollPosition: scrollPosition,
             completed: completed
         )
         await saveReadingSession(chapter: chapter)
@@ -991,8 +996,14 @@ extension ReaderViewController: @MainActor ReaderHoldingDelegate {
         let currentPage = currentPage
         let totalPages = toolbarView.totalPages
         let oldChapter = self.chapter
+        let scrollPosition = currentPosition
         Task {
-            await updateReadPosition(currentPage: currentPage, totalPages: totalPages, chapter: oldChapter)
+            await updateReadPosition(
+                currentPage: currentPage,
+                totalPages: totalPages,
+                chapter: oldChapter,
+                scrollPosition: scrollPosition
+            )
             sessionReadPages = [self.currentPage]
             sessionStartDate = Date.now
             sessionLastInteraction = nil
