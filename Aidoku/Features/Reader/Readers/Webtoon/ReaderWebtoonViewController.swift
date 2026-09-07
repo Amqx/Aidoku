@@ -661,7 +661,7 @@ extension ReaderWebtoonViewController {
         )
 
         let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
-        layout?.isInsertingCellsAbove = true
+        layout?.preserveOffsetAcrossChangeAbove()
 
         // disable animations and adjust offset before re-enabling
         CATransaction.begin()
