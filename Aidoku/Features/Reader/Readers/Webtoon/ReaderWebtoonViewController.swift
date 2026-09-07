@@ -726,7 +726,7 @@ extension ReaderWebtoonViewController {
 
         if !loadingPrevious, canTrimSection(at: 0) {
             CrashReporter.breadcrumb("append: trimming section 0 (\(chapters[0].key))")
-            // capture the pre-trim content size before the model shrinks
+            // preserve the visible cell as its section index changes
             let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
             layout?.preserveOffsetAcrossChangeAbove()
             chapters.removeFirst()
