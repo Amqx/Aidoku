@@ -241,7 +241,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         .init(title: NSLocalizedString("RESUME"), style: .default) { _ in
                             AppSettings.flags.libraryRefreshInProgress.reset()
                             Task {
-                                await MangaManager.shared.refreshLibrary()
+                                await MangaManager.shared.backgroundRefreshLibrary()
                             }
                         }
                     ]

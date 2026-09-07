@@ -24,13 +24,34 @@ class TabBarController: UITabBarController {
 
     private lazy var libraryProgressView = CircularProgressView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
 
+    private let libraryRefreshTitleLabel = UILabel()
+    private lazy var libraryRefreshCancelButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        button.accessibilityLabel = NSLocalizedString("CANCEL_LIBRARY_REFRESH")
+        button.addAction(UIAction { [weak self] _ in
+            self?.libraryRefreshCancelButton.isEnabled = false
+            Task { await MangaManager.shared.cancelLibraryRefresh() }
+        }, for: .touchUpInside)
+        return button
+    }()
+
     private lazy var libraryRefreshAccessory: UIView = {
         let view = UIView()
 
         let label = UILabel()
         label.text = NSLocalizedString("REFRESHING_LIBRARY")
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
+        label.font = .preferredFont(forTextStyle: .subheadline)
+        libraryRefreshTitleLabel.font = .preferredFont(forTextStyle: .caption1)
+        libraryRefreshTitleLabel.textColor = .secondaryLabel
+        libraryRefreshTitleLabel.lineBreakMode = .byTruncatingTail
+        let labels = UIStackView(arrangedSubviews: [label, libraryRefreshTitleLabel])
+        labels.axis = .vertical
+        labels.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(labels)
+
+        libraryRefreshCancelButton.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(libraryRefreshCancelButton)
 
         libraryProgressView.radius = 12
         libraryProgressView.translatesAutoresizingMaskIntoConstraints = false
@@ -55,12 +76,17 @@ class TabBarController: UITabBarController {
         }
 
         NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-            label.trailingAnchor.constraint(equalTo: libraryProgressView.leadingAnchor, constant: -16),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            label.heightAnchor.constraint(equalToConstant: 48),
+            labels.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
+            labels.trailingAnchor.constraint(equalTo: libraryProgressView.leadingAnchor, constant: -16),
+            labels.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: view.topAnchor, constant: 4),
 
-            libraryProgressView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
+            libraryRefreshCancelButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -4),
+            libraryRefreshCancelButton.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            libraryRefreshCancelButton.widthAnchor.constraint(equalToConstant: 44),
+            libraryRefreshCancelButton.heightAnchor.constraint(equalToConstant: 44),
+
+            libraryProgressView.trailingAnchor.constraint(equalTo: libraryRefreshCancelButton.leadingAnchor, constant: -8),
             libraryProgressView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             libraryProgressView.widthAnchor.constraint(equalToConstant: 20),
             libraryProgressView.heightAnchor.constraint(equalToConstant: 20)
@@ -236,6 +262,8 @@ extension TabBarController {
     }
 
     func showLibraryRefreshView() {
+        libraryRefreshTitleLabel.text = NSLocalizedString("PROCESSING_ENTRIES")
+        libraryRefreshCancelButton.isEnabled = true
         libraryProgressView.setProgress(value: 0, withAnimation: false)
 
         if #available(iOS 26.0, *) {
@@ -249,7 +277,8 @@ extension TabBarController {
         }
     }
 
-    func setLibraryRefreshProgress(_ progress: Float) {
+    func setLibraryRefreshProgress(_ progress: Float, title: String? = nil) {
+        libraryRefreshTitleLabel.text = title
         libraryProgressView.setProgress(value: progress, withAnimation: true)
     }
 

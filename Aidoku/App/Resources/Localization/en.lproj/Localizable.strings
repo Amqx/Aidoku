@@ -9,6 +9,7 @@
 // General
 "CONTINUE" = "Continue";
 "CANCEL" = "Cancel";
+"CANCEL_LIBRARY_REFRESH" = "Cancel Library Update";
 "OK" = "OK";
 "DONE" = "Done";
 "EDIT" = "Edit";
@@ -485,7 +486,7 @@
 "EXCLUDED_CATEGORIES" = "Excluded Categories";
 "REFRESH_METADATA" = "Refresh Metadata";
 "BACKGROUND_REFRESH" = "Background Refresh";
-"BACKGROUND_REFRESH_TEXT" = "When starting a library refresh manually, allow the refresh to complete even if the app is backgrounded.";
+"BACKGROUND_REFRESH_TEXT" = "Keep manual library updates running in the background.";
 "NEW_CHAPTER_NOTIFICATIONS" = "New Chapter Notifications";
 "NEW_CHAPTER_NOTIFICATIONS_TEXT" = "Send notifications when the library is refreshed in the background.";
 "1_NEW_CHAPTER_AVAILABLE" = "New chapter available";
