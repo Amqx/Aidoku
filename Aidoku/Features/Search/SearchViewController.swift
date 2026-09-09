@@ -239,7 +239,6 @@ class SearchViewController: UIViewController {
 
     func search(for query: String) {
         loadViewIfNeeded()
-        viewModel.isLoading = !query.isEmpty
         searchText = query
         searchController.searchBar.text = query
 
