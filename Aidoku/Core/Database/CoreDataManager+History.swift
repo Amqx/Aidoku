@@ -10,9 +10,11 @@ import CoreData
 
 extension CoreDataManager {
     /// Remove all history objects.
-    func clearHistory(context: NSManagedObjectContext) {
+    func clearHistory(context: NSManagedObjectContext, preservingMetadata: Bool = false) {
         clear(request: HistoryObject.fetchRequest(), context: context)
-        clearCachedMetadata(context: context)
+        if !preservingMetadata {
+            clearCachedMetadata(context: context)
+        }
         clearCachedManga(context: context)
         clearCachedChapters(context: context)
     }

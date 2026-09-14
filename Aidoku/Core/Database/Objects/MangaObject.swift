@@ -171,6 +171,7 @@ extension MangaObject {
     @NSManaged public var id: String
     @NSManaged public var sourceId: String
     @NSManaged public var title: String
+    @NSManaged public var chapterCount: Int64
     @NSManaged public var author: String?
     @NSManaged public var artist: String?
     @NSManaged public var desc: String?

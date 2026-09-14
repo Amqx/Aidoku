@@ -435,9 +435,9 @@ extension CoreDataManager {
             if let mangaObjects = objects as? [MangaObject] {
                 // A history-only record can arrive from another device for a bookmarked series.
                 // Keep library membership and edited metadata instead of choosing an arbitrary row.
-                let survivor = mangaObjects.first(where: { $0.libraryObject != nil })
+                guard let survivor = mangaObjects.first(where: { $0.libraryObject != nil })
                     ?? mangaObjects.first(where: { $0.fileInfo != nil })
-                    ?? mangaObjects[0]
+                    ?? mangaObjects.first else { return }
                 for duplicate in mangaObjects where duplicate !== survivor {
                     for chapter in (duplicate.chapters?.allObjects as? [ChapterObject]) ?? [] {
                         chapter.manga = survivor

@@ -22,7 +22,7 @@ extension CoreDataManager {
         // The lookup identity wins if a source normalizes the key in its response.
         object.sourceId = mangaId.sourceKey
         object.id = mangaId.mangaKey
-        if let chapters = manga.chapters {
+        if let chapters = manga.chapters, !chapters.isEmpty {
             setChapters(chapters, mangaId: mangaId, context: context)
         }
         removeLegacyHistoryCache(mangaId: mangaId, context: context)
@@ -30,6 +30,8 @@ extension CoreDataManager {
 
     /// Cache reader metadata once, without rewriting the chapter list on every progress update.
     func cacheMetadataIfMissing(manga: AidokuRunner.Manga, context: NSManagedObjectContext) {
+        // Download listings supply only a title and cover, with no source details or chapters.
+        guard manga.chapters != nil else { return }
         guard getManga(mangaId: manga.identifier, context: context) == nil else { return }
         cacheMetadata(manga: manga, mangaId: manga.identifier, context: context)
     }

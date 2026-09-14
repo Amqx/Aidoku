@@ -383,8 +383,9 @@ extension MangaView.ViewModel {
     // Load stored metadata for both library and history entries before requesting it from the source.
     func fetchData() async {
         let mangaId = manga.identifier
-        let storedManga = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
-            CoreDataManager.shared.getManga(mangaId: mangaId, context: context)?.toNewManga()
+        let (storedManga, inLibrary) = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
+            let object = CoreDataManager.shared.getManga(mangaId: mangaId, context: context)
+            return (object?.toNewManga(), object?.libraryObject != nil)
         }
         if let storedManga {
             // load data from db
@@ -403,7 +404,8 @@ extension MangaView.ViewModel {
                 self.manga = newManga
                 self.chapters = filteredChapters()
             }
-        } else if let source {
+        }
+        if !inLibrary || storedManga == nil, let source {
             // load new data from source
             await source.partialMangaPublisher?.sink { @Sendable newManga in
                 Task { @MainActor in
@@ -426,8 +428,6 @@ extension MangaView.ViewModel {
                 }
             } catch {
                 withAnimation {
-                    self.manga.chapters = []
-                    self.chapters = []
                     self.error = error
                 }
             }

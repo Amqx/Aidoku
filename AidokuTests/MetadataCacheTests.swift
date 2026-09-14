@@ -43,6 +43,7 @@ struct MetadataCacheTests {
         manager.addToLibrary(manga: manga, chapters: manga.chapters ?? [], context: fixture.context)
         let chapter = try #require(manager.getChapter(chapterId: chapterId(manga), context: fixture.context))
         manager.createMangaUpdate(mangaId: manga.identifier, chapterObject: chapter, context: fixture.context)
+        _ = manager.getOrCreateHistory(chapterId: chapterId(manga), context: fixture.context)
         try fixture.context.save()
         #expect(manager.getManga(context: fixture.context).count == 1)
         #expect(manager.hasLibraryManga(mangaId: manga.identifier, context: fixture.context))
@@ -53,6 +54,60 @@ struct MetadataCacheTests {
         #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context) === original)
         #expect(manager.getChapters(mangaId: manga.identifier, context: fixture.context).count == 2)
         #expect(manager.getUpdates(context: fixture.context).isEmpty)
+    }
+
+    @Test func removingUnreadLibraryMangaPrunesMetadata() throws {
+        let fixture = try StoreFixture()
+        let manga = makeManga()
+        manager.addToLibrary(manga: manga, chapters: manga.chapters ?? [], context: fixture.context)
+        try fixture.context.save()
+        manager.removeFromLibrary(ids: [manga.identifier], context: fixture.context)
+        try fixture.context.save()
+        fixture.context.reset()
+        #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context) == nil)
+        #expect(manager.getChapters(mangaId: manga.identifier, context: fixture.context).isEmpty)
+    }
+
+    @Test func readerStubDoesNotPreventFullMetadataCaching() throws {
+        let fixture = try StoreFixture()
+        let manga = makeManga()
+        let stub = AidokuRunner.Manga(sourceKey: manga.sourceKey, key: manga.key, title: "")
+        manager.cacheMetadataIfMissing(manga: stub, context: fixture.context)
+        #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context) == nil)
+        manager.cacheMetadataIfMissing(manga: manga, context: fixture.context)
+        try fixture.context.save()
+        #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context)?.title == manga.title)
+    }
+
+    @Test func emptyHistoryResponsePreservesChaptersAndRefreshesDetails() throws {
+        let fixture = try StoreFixture()
+        var manga = makeManga()
+        manager.cacheMetadata(manga: manga, mangaId: manga.identifier, context: fixture.context)
+        _ = manager.getOrCreateHistory(chapterId: chapterId(manga), context: fixture.context)
+        try fixture.context.save()
+        manga.title = "Updated title"
+        manga.chapters = []
+        manager.cacheHistoryData(
+            manga: manga, mangaId: manga.identifier, mangaDetails: manga,
+            chapterIds: ["one"], context: fixture.context
+        )
+        try fixture.context.save()
+        fixture.context.reset()
+        #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context)?.title == "Updated title")
+        #expect(manager.getChapters(mangaId: manga.identifier, context: fixture.context).count == 2)
+    }
+
+    @Test func restoreHistoryClearingPreservesUnattachedMetadata() throws {
+        let fixture = try StoreFixture()
+        let manga = makeManga()
+        manager.cacheMetadata(manga: manga, mangaId: manga.identifier, context: fixture.context)
+        _ = manager.getOrCreateHistory(chapterId: chapterId(manga), context: fixture.context)
+        try fixture.context.save()
+        manager.clearHistory(context: fixture.context, preservingMetadata: true)
+        fixture.context.reset()
+        #expect(manager.getHistory(context: fixture.context).isEmpty)
+        #expect(manager.getManga(mangaId: manga.identifier, context: fixture.context) != nil)
+        #expect(manager.getChapters(mangaId: manga.identifier, context: fixture.context).count == 2)
     }
 
     @Test func historyFetchStoresUnreadChaptersAndRetiresLegacyCache() throws {

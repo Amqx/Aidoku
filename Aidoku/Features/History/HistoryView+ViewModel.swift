@@ -337,17 +337,17 @@ extension HistoryView.ViewModel {
         guard let source = await SourceManager.shared.source(for: mangaId.sourceKey) else { return }
         let tempManga = AidokuRunner.Manga(sourceKey: mangaId.sourceKey, key: mangaId.mangaKey, title: "")
 
-        let storedManga = await CoreDataManager.shared.container.performBackgroundTask { context in
-            CoreDataManager.shared.getManga(mangaId: mangaId, context: context)?.toNewManga()
+        let protectedManga = await CoreDataManager.shared.container.performBackgroundTask { context in
+            guard let object = CoreDataManager.shared.getManga(mangaId: mangaId, context: context),
+                  object.libraryObject != nil || object.fileInfo != nil else { return nil as AidokuRunner.Manga? }
+            return object.toNewManga()
         }
-        let needsManga = storedManga == nil
-
         if let newManga = try? await source.getMangaUpdate(
             manga: tempManga,
-            needsDetails: needsManga,
+            needsDetails: protectedManga == nil,
             needsChapters: true
         ) {
-            let mangaDetails = storedManga ?? newManga
+            let mangaDetails = protectedManga ?? newManga
             await CoreDataManager.shared.container.performBackgroundTask { context in
                 CoreDataManager.shared.cacheHistoryData(
                     manga: newManga,
@@ -363,9 +363,7 @@ extension HistoryView.ViewModel {
                 }
             }
             await MainActor.run {
-                if needsManga {
-                    self.mangaCache[mangaId] = newManga
-                }
+                self.mangaCache[mangaId] = mangaDetails
                 if let chapters = newManga.chapters {
                     for chapter in chapters where chapterIds.contains(chapter.key) {
                         let key = ChapterIdentifier(sourceKey: mangaId.sourceKey, mangaKey: mangaId.mangaKey, chapterKey: chapter.key)
@@ -429,8 +427,10 @@ extension HistoryView.ViewModel {
                     completed: historyObject.completed,
                     manga: mangaObjects[mangaId]?.toNewManga() ?? cachedMangaObjects[mangaId]?.toManga(),
                     chapter: chapter,
-                    metadataCached: mangaObjects[mangaId] != nil,
-                    chaptersCached: (mangaObjects[mangaId]?.chapters?.count ?? 0) > 0
+                    metadataCached: mangaObjects[mangaId].map {
+                        !$0.title.isEmpty && ($0.libraryObject != nil || $0.fileInfo != nil || $0.chapterCount > 0)
+                    } ?? false,
+                    chaptersCached: (mangaObjects[mangaId]?.chapterCount ?? 0) > 0
                         || (cachedMangaObjects[mangaId]?.chaptersCached == true && cachedChapterObjects[chapterId] != nil)
                 )
             }

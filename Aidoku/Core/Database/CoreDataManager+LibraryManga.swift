@@ -116,7 +116,11 @@ extension CoreDataManager {
 
         for manga in mangaObjects {
             if let libraryObject = manga.libraryObject {
+                manga.libraryObject = nil
                 context.delete(libraryObject)
+            }
+            if !hasHistory(mangaId: manga.identifier, context: context) {
+                removeCachedMetadata(mangaId: manga.identifier, context: context)
             }
         }
 

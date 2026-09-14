@@ -273,35 +273,7 @@ struct HistoryView: View {
         let storedManga = await CoreDataManager.shared.container.performBackgroundTask { context in
             CoreDataManager.shared.getManga(mangaId: mangaId, context: context)?.toNewManga()
         }
-        var manga = storedManga ?? viewModel.mangaCache[mangaId]
-
-        // Old history caches only contain display metadata. Fetch full details once before resuming.
-        if storedManga == nil, let source = await SourceManager.shared.source(for: mangaId.sourceKey) {
-            let currentManga = manga ?? AidokuRunner.Manga(sourceKey: mangaId.sourceKey, key: mangaId.mangaKey, title: "")
-            if let updatedManga = try? await source.getMangaUpdate(
-                manga: currentManga,
-                needsDetails: true,
-                needsChapters: true
-            ) {
-                manga = updatedManga
-                viewModel.mangaCache[mangaId] = updatedManga
-                await CoreDataManager.shared.container.performBackgroundTask { context in
-                    let history = CoreDataManager.shared.getHistoryForManga(mangaId: mangaId, context: context)
-                    CoreDataManager.shared.cacheHistoryData(
-                        manga: updatedManga,
-                        mangaId: mangaId,
-                        mangaDetails: updatedManga,
-                        chapterIds: Set(history.map(\.chapterId)),
-                        context: context
-                    )
-                    do {
-                        try context.save()
-                    } catch {
-                        LogManager.logger.error("History resume metadata save failed: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
+        let manga = storedManga ?? viewModel.mangaCache[mangaId]
 
         let (chapters, nextChapter) = await MangaManager.shared.getNextChapter(
             mangaId: mangaId,

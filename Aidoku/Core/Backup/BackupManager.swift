@@ -153,10 +153,10 @@ actor BackupManager {
             } else {
                 []
             }
+            let exportedMangaIds = Set(manga.map { MangaIdentifier(sourceKey: $0.sourceId, mangaKey: $0.id) })
             let chapters: [BackupChapter] = if options.chapters {
                 CoreDataManager.shared.getChapters(context: context).filter {
-                    $0.manga?.libraryObject != nil || $0.fileInfo != nil || $0.manga?.fileInfo != nil
-                        || (options.history && historyMangaIds.contains($0.identifier.mangaIdentifier))
+                    exportedMangaIds.contains($0.identifier.mangaIdentifier)
                 }.map {
                     BackupChapter(chapterObject: $0)
                 }
@@ -400,7 +400,8 @@ extension BackupManager {
         let historyTask = Task {
             if let backupHistory = backup.history {
                 let result = await CoreDataManager.shared.container.performBackgroundTask { context in
-                    CoreDataManager.shared.clearHistory(context: context)
+                    // Restored metadata may already exist, including history-only manga.
+                    CoreDataManager.shared.clearHistory(context: context, preservingMetadata: true)
                     for item in backupHistory {
                         _ = item.toObject(context: context)
                     }
@@ -435,8 +436,10 @@ extension BackupManager {
                         uniquingKeysWith: { first, _ in first }
                     )
                     for backupChapter in backupChapters {
+                        let mangaId = MangaIdentifier(sourceKey: backupChapter.sourceId, mangaKey: backupChapter.mangaId)
+                        guard let manga = mangaByKey[mangaId] else { continue }
                         let chapter = backupChapter.toObject(context: context)
-                        chapter.manga = mangaByKey[chapter.identifier.mangaIdentifier]
+                        chapter.manga = manga
                         chapter.history = historyByKey[chapter.identifier]
                     }
                     do {
