@@ -1,0 +1,46 @@
+name: Update AltStore Source
+
+on:
+  workflow_run:
+    workflows: [Build Nightly]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: altstore-source
+  cancel-in-progress: false
+
+jobs:
+  update-source:
+    if: >-
+      github.repository == 'Amqx/Aidoku' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout publisher
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      - name: Generate source from latest successful nightly
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 .github/workflows/supporting/update_altstore_json.py
+
+      - name: Publish source
+        if: steps.source.outputs.publish == 'true'
+        uses: JamesIves/github-pages-deploy-action@15de0f09300eea763baee31dff6c6184995c5f6a # v4.7.2
+        with:
+          branch: altstore
+          folder: .github/workflows/supporting/altstore
+          git-config-name: github-actions[bot]
+          git-config-email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit-message: Update AltStore nightly source
+          single-commit: true

@@ -57,6 +57,7 @@ jobs:
             CODE_SIGN_IDENTITY= \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER.$GITHUB_RUN_ATTEMPT" \
             archive 2>&1 \
               | tee /tmp/aidoku-build.log \
               | xcbeautify --renderer github-actions; then
