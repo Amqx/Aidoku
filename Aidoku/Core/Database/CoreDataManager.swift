@@ -432,6 +432,23 @@ extension CoreDataManager {
 
         if (try? context.count(for: request)) ?? 0 > 1 {
             guard let objects = try? context.fetch(request) else { return }
+            if let mangaObjects = objects as? [MangaObject] {
+                // A history-only record can arrive from another device for a bookmarked series.
+                // Keep library membership and edited metadata instead of choosing an arbitrary row.
+                let survivor = mangaObjects.first(where: { $0.libraryObject != nil })
+                    ?? mangaObjects.first(where: { $0.fileInfo != nil })
+                    ?? mangaObjects[0]
+                for duplicate in mangaObjects where duplicate !== survivor {
+                    for chapter in (duplicate.chapters?.allObjects as? [ChapterObject]) ?? [] {
+                        chapter.manga = survivor
+                    }
+                    if survivor.fileInfo == nil {
+                        survivor.fileInfo = duplicate.fileInfo
+                    }
+                    context.delete(duplicate)
+                }
+                return
+            }
             for object in objects.dropFirst(1) {
                 if let object = object as? NSManagedObject {
                     context.delete(object)

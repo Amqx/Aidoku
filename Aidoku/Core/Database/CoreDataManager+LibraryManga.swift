@@ -89,7 +89,7 @@ extension CoreDataManager {
         context: NSManagedObjectContext
     ) {
         let mangaObject = self.getOrCreateManga(manga, context: context)
-        let libraryObject = LibraryMangaObject(context: context)
+        let libraryObject = mangaObject.libraryObject ?? LibraryMangaObject(context: context)
         libraryObject.manga = mangaObject
         libraryObject.lastChapter = chapters.compactMap { $0.dateUploaded }.max()
         self.setChapters(chapters, mangaId: manga.identifier, context: context)
@@ -115,22 +115,14 @@ extension CoreDataManager {
         let mangaObjects = (try? context.fetch(mangaRequest)) ?? []
 
         for manga in mangaObjects {
-            if manga.fileInfo != nil {
-                if let libraryObject = manga.libraryObject {
-                    context.delete(libraryObject)
-                }
-            } else {
-                context.delete(manga)
+            if let libraryObject = manga.libraryObject {
+                context.delete(libraryObject)
             }
         }
 
-        let chapterRequest = ChapterObject.fetchRequest()
-        chapterRequest.predicate = mangaIdentifierPredicate(
-            ids: ids,
-            mangaKeyPath: "mangaId",
-            extraPredicates: [NSPredicate(format: "fileInfo == nil")]
-        )
-        queueClear(request: chapterRequest, context: context)
+        let updateRequest = MangaUpdateObject.fetchRequest()
+        updateRequest.predicate = mangaIdentifierPredicate(ids: ids, mangaKeyPath: "mangaId")
+        queueClear(request: updateRequest, context: context)
 
         let trackRequest = TrackObject.fetchRequest()
         trackRequest.predicate = mangaIdentifierPredicate(ids: ids, mangaKeyPath: "mangaId")

@@ -16,6 +16,7 @@ extension HistoryManager {
     func setProgress(
         chapterId: ChapterIdentifier,
         chapter: AidokuRunner.Chapter,
+        manga: AidokuRunner.Manga,
         progress: Int,
         totalPages: Int? = nil,
         scrollPosition: Double? = nil,
@@ -23,6 +24,7 @@ extension HistoryManager {
     ) async {
         let mangaId = chapterId.mangaIdentifier
         await CoreDataManager.shared.container.performBackgroundTask { context in
+            CoreDataManager.shared.cacheMetadataIfMissing(manga: manga, context: context)
             CoreDataManager.shared.setRead(mangaId: mangaId, context: context)
             let historyObject = CoreDataManager.shared.setProgress(
                 progress,
@@ -75,11 +77,15 @@ extension HistoryManager {
     func addHistory(
         mangaId: MangaIdentifier,
         chapters: [AidokuRunner.Chapter],
+        manga: AidokuRunner.Manga? = nil,
         date: Date = Date(),
         skipTracker: Tracker? = nil
     ) async {
         // mark each manga as read
         let success = await CoreDataManager.shared.container.performBackgroundTask { context in
+            if let manga {
+                CoreDataManager.shared.cacheMetadataIfMissing(manga: manga, context: context)
+            }
             // mark chapters as read
             var chapterMetadata: [ChapterIdentifier: AidokuRunner.Chapter] = [:]
             for chapter in chapters {

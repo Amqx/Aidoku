@@ -142,15 +142,22 @@ actor BackupManager {
             } else {
                 []
             }
-            let manga: [BackupManga] = if options.libraryEntries {
-                CoreDataManager.shared.getManga(context: context).map {
+            let historyMangaIds = Set(history.map { MangaIdentifier(sourceKey: $0.sourceId, mangaKey: $0.mangaId) })
+            let manga: [BackupManga] = if options.libraryEntries || options.history {
+                CoreDataManager.shared.getManga(context: context).filter {
+                    (options.libraryEntries && ($0.libraryObject != nil || $0.fileInfo != nil))
+                        || (options.history && historyMangaIds.contains($0.identifier))
+                }.map {
                     BackupManga(mangaObject: $0)
                 }
             } else {
                 []
             }
             let chapters: [BackupChapter] = if options.chapters {
-                CoreDataManager.shared.getChapters(context: context).map {
+                CoreDataManager.shared.getChapters(context: context).filter {
+                    $0.manga?.libraryObject != nil || $0.fileInfo != nil || $0.manga?.fileInfo != nil
+                        || (options.history && historyMangaIds.contains($0.identifier.mangaIdentifier))
+                }.map {
                     BackupChapter(chapterObject: $0)
                 }
             } else {

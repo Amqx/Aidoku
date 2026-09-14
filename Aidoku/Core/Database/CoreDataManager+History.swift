@@ -12,6 +12,7 @@ extension CoreDataManager {
     /// Remove all history objects.
     func clearHistory(context: NSManagedObjectContext) {
         clear(request: HistoryObject.fetchRequest(), context: context)
+        clearCachedMetadata(context: context)
         clearCachedManga(context: context)
         clearCachedChapters(context: context)
     }
@@ -45,6 +46,7 @@ extension CoreDataManager {
 
         request.predicate = excludePredicate
         clear(request: request, context: context)
+        clearCachedMetadata(context: context)
         clearHistoryCacheExcludingLibrary(context: context)
     }
 

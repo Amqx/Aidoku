@@ -488,6 +488,7 @@ extension ReaderViewController {
         await HistoryManager.shared.setProgress(
             chapterId: chapterId,
             chapter: chapter,
+            manga: manga,
             progress: currentPage,
             totalPages: totalPages,
             scrollPosition: scrollPosition,
@@ -1130,7 +1131,8 @@ extension ReaderViewController: @MainActor ReaderHoldingDelegate {
         Task { [chaptersToMark] in
             await HistoryManager.shared.addHistory(
                 mangaId: manga.identifier,
-                chapters: chaptersToMark
+                chapters: chaptersToMark,
+                manga: manga
             )
         }
 

@@ -85,7 +85,7 @@ actor MangaManager {
         var chapters = await CoreDataManager.shared.getChapters(mangaId: mangaId)
             .map { $0.toNew() }
 
-        // chapters are only stored for manga in the library, so fall back to the ones we have loaded
+        // Fall back to loaded/source chapters when no complete list has been stored yet.
         if chapters.isEmpty {
             if let fallbackChapters, !fallbackChapters.isEmpty {
                 chapters = fallbackChapters
@@ -187,9 +187,7 @@ extension MangaManager {
 
     func removeFromLibrary(mangaId: MangaIdentifier) async {
         await CoreDataManager.shared.container.performBackgroundTask { context in
-            CoreDataManager.shared.removeManga(mangaId: mangaId, context: context)
-            CoreDataManager.shared.removeChapters(mangaId: mangaId, context: context)
-            CoreDataManager.shared.removeTracks(mangaId: mangaId, context: context)
+            CoreDataManager.shared.removeFromLibrary(ids: [mangaId], context: context)
             do {
                 try context.save()
             } catch {

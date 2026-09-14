@@ -380,13 +380,13 @@ extension MangaView.ViewModel {
         await fetchData()
     }
 
-    // fetches manga data, from coredata if in library or from source if not
+    // Load stored metadata for both library and history entries before requesting it from the source.
     func fetchData() async {
         let mangaId = manga.identifier
-        let inLibrary = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
-            CoreDataManager.shared.hasLibraryManga(mangaId: mangaId, context: context)
+        let storedManga = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
+            CoreDataManager.shared.getManga(mangaId: mangaId, context: context)?.toNewManga()
         }
-        if inLibrary {
+        if let storedManga {
             // load data from db
             let chapters = await CoreDataManager.shared.container.performBackgroundTask { @Sendable context in
                 CoreDataManager.shared.getChapters(
@@ -397,7 +397,7 @@ extension MangaView.ViewModel {
                 }
             }
 
-            var newManga = self.manga
+            var newManga = self.manga.copy(from: storedManga)
             newManga.chapters = chapters
             withAnimation {
                 self.manga = newManga
@@ -419,6 +419,7 @@ extension MangaView.ViewModel {
                     needsDetails: true,
                     needsChapters: true
                 )
+                await cacheMetadata(newManga)
                 withAnimation {
                     manga = newManga
                     chapters = filteredChapters()
@@ -585,6 +586,8 @@ extension MangaView.ViewModel {
                 }
 
                 NotificationCenter.default.post(name: .updateManga, object: newManga.identifier)
+            } else {
+                await cacheMetadata(newManga)
             }
 
             await loadHistory()
@@ -608,6 +611,18 @@ extension MangaView.ViewModel {
         }
 
         updateReadButton()
+    }
+
+    private func cacheMetadata(_ manga: AidokuRunner.Manga) async {
+        guard !AppSettings.general.incognitoMode.get() else { return }
+        await CoreDataManager.shared.container.performBackgroundTask { context in
+            CoreDataManager.shared.cacheMetadata(manga: manga, mangaId: manga.identifier, context: context)
+            do {
+                try context.save()
+            } catch {
+                LogManager.logger.error("Metadata cache save failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func loadDownloadStatus() async {
@@ -671,6 +686,7 @@ extension MangaView.ViewModel {
                     await HistoryManager.shared.addHistory(
                         mangaId: self.manga.identifier,
                         chapters: chaptersToMark,
+                        manga: self.manga,
                         skipTracker: tracker
                     )
                 }
@@ -700,7 +716,8 @@ extension MangaView.ViewModel {
 
         await HistoryManager.shared.addHistory(
             mangaId: manga.identifier,
-            chapters: chapters
+            chapters: chapters,
+            manga: manga
         )
         let date = Int(Date().timeIntervalSince1970)
         for chapter in chapters {

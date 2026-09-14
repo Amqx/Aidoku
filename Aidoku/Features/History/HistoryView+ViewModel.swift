@@ -337,14 +337,17 @@ extension HistoryView.ViewModel {
         guard let source = await SourceManager.shared.source(for: mangaId.sourceKey) else { return }
         let tempManga = AidokuRunner.Manga(sourceKey: mangaId.sourceKey, key: mangaId.mangaKey, title: "")
 
-        let needsManga = mangaCache[mangaId] == nil
+        let storedManga = await CoreDataManager.shared.container.performBackgroundTask { context in
+            CoreDataManager.shared.getManga(mangaId: mangaId, context: context)?.toNewManga()
+        }
+        let needsManga = storedManga == nil
 
         if let newManga = try? await source.getMangaUpdate(
             manga: tempManga,
             needsDetails: needsManga,
             needsChapters: true
         ) {
-            let mangaDetails = needsManga ? newManga : mangaCache[mangaId] ?? newManga
+            let mangaDetails = storedManga ?? newManga
             await CoreDataManager.shared.container.performBackgroundTask { context in
                 CoreDataManager.shared.cacheHistoryData(
                     manga: newManga,
@@ -384,6 +387,7 @@ extension HistoryView.ViewModel {
         let completed: Bool
         let manga: AidokuRunner.Manga?
         let chapter: AidokuRunner.Chapter?
+        let metadataCached: Bool
         let chaptersCached: Bool
     }
 
@@ -425,8 +429,9 @@ extension HistoryView.ViewModel {
                     completed: historyObject.completed,
                     manga: mangaObjects[mangaId]?.toNewManga() ?? cachedMangaObjects[mangaId]?.toManga(),
                     chapter: chapter,
-                    chaptersCached: cachedMangaObjects[mangaId]?.chaptersCached == true
-                        && cachedChapterObjects[chapterId] != nil
+                    metadataCached: mangaObjects[mangaId] != nil,
+                    chaptersCached: (mangaObjects[mangaId]?.chapters?.count ?? 0) > 0
+                        || (cachedMangaObjects[mangaId]?.chaptersCached == true && cachedChapterObjects[chapterId] != nil)
                 )
             }
         }
@@ -457,7 +462,7 @@ extension HistoryView.ViewModel {
             let mangaId = chapterId.mangaIdentifier
 
             // If manga or chapter is missing, add to queue for background loading
-            if obj.manga == nil || (obj.chapter == nil && !obj.chaptersCached) {
+            if !obj.metadataCached || (obj.chapter == nil && !obj.chaptersCached) {
                 await addToQueue(mangaId: mangaId, chapterKey: chapterId.chapterKey)
             }
 

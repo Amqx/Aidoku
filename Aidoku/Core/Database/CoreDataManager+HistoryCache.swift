@@ -130,19 +130,25 @@ extension CoreDataManager {
     }
 
     func removeHistoryCache(mangaId: MangaIdentifier, context: NSManagedObjectContext) {
+        removeCachedMetadata(mangaId: mangaId, context: context)
+        removeLegacyHistoryCache(mangaId: mangaId, context: context)
+    }
+
+    // Kept only to read and retire caches written by older versions. New metadata uses Manga/Chapter.
+    func removeLegacyHistoryCache(mangaId: MangaIdentifier, context: NSManagedObjectContext) {
         let mangaRequest = CachedMangaObject.fetchRequest()
         mangaRequest.predicate = NSPredicate(
             format: "sourceId == %@ AND id == %@",
             mangaId.sourceKey, mangaId.mangaKey
         )
-        clear(request: mangaRequest, context: context)
+        queueClear(request: mangaRequest, context: context)
 
         let chapterRequest = CachedChapterObject.fetchRequest()
         chapterRequest.predicate = NSPredicate(
             format: "sourceId == %@ AND mangaId == %@",
             mangaId.sourceKey, mangaId.mangaKey
         )
-        clear(request: chapterRequest, context: context)
+        queueClear(request: chapterRequest, context: context)
     }
 
     /// Remove chapter cache rows with deleted history and the manga row once no history remains.
@@ -165,7 +171,7 @@ extension CoreDataManager {
         }
     }
 
-    /// Stores source results in the device-local history cache for the requested history chapters.
+    /// Store full metadata in the shared manga/chapter tables while the requested history still exists.
     func cacheHistoryData(
         manga: AidokuRunner.Manga,
         mangaId: MangaIdentifier,
@@ -192,33 +198,13 @@ extension CoreDataManager {
         // for chapters whose history still exists in this context.
         guard !identifiers.isEmpty else { return }
 
-        let mangaObject = getCachedManga(mangaId: mangaId, context: context)
-            ?? CachedMangaObject(context: context)
-        mangaObject.load(from: mangaDetails)
-        // The lookup key is authoritative; sources may normalize keys in returned payloads.
-        mangaObject.sourceId = mangaId.sourceKey
-        mangaObject.id = mangaId.mangaKey
+        var details = mangaDetails
+        details.chapters = manga.chapters
+        cacheMetadata(manga: details, mangaId: mangaId, context: context)
 
-        let chapters = manga.chapters ?? []
-        mangaObject.chaptersCached = !chapters.isEmpty
-        let cachedChapters = getCachedChapters(chapterIds: identifiers, context: context)
-        let chaptersByKey = Dictionary(chapters.map { ($0.key, $0) }, uniquingKeysWith: { first, _ in first })
-
-        for chapterId in identifiers {
-            if let chapter = chaptersByKey[chapterId.chapterKey] {
-                let chapterObject = cachedChapters[chapterId]
-                    ?? CachedChapterObject(context: context)
-                chapterObject.load(from: chapter, mangaId: mangaId)
-                for historyObject in histories[chapter.key] ?? [] {
-                    historyObject.loadChapterMetadata(from: chapter)
-                }
-            } else if !chapters.isEmpty && cachedChapters[chapterId] == nil {
-                // Record that a non-empty source response did not contain this chapter, so a
-                // dropped chapter does not trigger the same network request on every launch.
-                let chapterObject = CachedChapterObject(context: context)
-                chapterObject.sourceId = mangaId.sourceKey
-                chapterObject.mangaId = mangaId.mangaKey
-                chapterObject.id = chapterId.chapterKey
+        for chapter in manga.chapters ?? [] {
+            for historyObject in histories[chapter.key] ?? [] {
+                historyObject.loadChapterMetadata(from: chapter)
             }
         }
     }
