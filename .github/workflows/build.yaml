@@ -21,11 +21,6 @@ jobs:
 
     runs-on: macos-26
 
-    env:
-      XCODE_VERSION: "26.6"
-      DERIVED_DATA: build/DerivedData
-      SOURCE_PACKAGES: build/SourcePackages
-
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -33,27 +28,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@ed7a3b1fda3918c0306d1b724322adc0b8cc0a90 # v1.7.0
         with:
-          xcode-version: ${{ env.XCODE_VERSION }}
-
-      - name: Cache SwiftPM dependencies
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ${{ env.SOURCE_PACKAGES }}
-            ~/Library/Caches/org.swift.swiftpm
-          key: spm-${{ runner.os }}-${{ env.XCODE_VERSION }}-${{ hashFiles('Aidoku.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-${{ env.XCODE_VERSION }}-
-
-      - name: Cache DerivedData
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: |
-            ${{ env.DERIVED_DATA }}/Build
-            ${{ env.DERIVED_DATA }}/ModuleCache.noindex
-          key: deriveddata-${{ runner.os }}-${{ env.XCODE_VERSION }}-${{ github.sha }}
-          restore-keys: |
-            deriveddata-${{ runner.os }}-${{ env.XCODE_VERSION }}-
+          xcode-version: "26.6"
 
       - name: Install iOS platform
         run: |
@@ -78,8 +53,6 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/Aidoku.xcarchive \
-            -derivedDataPath "$DERIVED_DATA" \
-            -clonedSourcePackagesDirPath "$SOURCE_PACKAGES" \
             -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY= \
             CODE_SIGNING_REQUIRED=NO \
