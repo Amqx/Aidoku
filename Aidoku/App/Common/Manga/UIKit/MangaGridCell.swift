@@ -28,6 +28,7 @@ class MangaGridCell: UICollectionViewCell {
         }
         set {
             bookmarkView.isHidden = !newValue
+            overlayView.backgroundColor = newValue ? UIColor(white: 0, alpha: 0.25) : .clear
         }
     }
 
@@ -185,6 +186,7 @@ class MangaGridCell: UICollectionViewCell {
         imageTask?.cancel()
         imageTask = nil
         highlightView.alpha = 0
+        showsBookmark = false
     }
 }
 

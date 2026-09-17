@@ -31,6 +31,7 @@ struct MangaCoverView: View {
             contentMode: contentMode,
             placeholder: placeholder
         )
+        .overlay(Color.black.opacity(bookmarked ? 0.25 : 0))
         .overlay(
             bookmarkView,
             alignment: .topTrailing

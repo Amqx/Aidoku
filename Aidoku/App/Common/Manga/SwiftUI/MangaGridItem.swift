@@ -33,6 +33,7 @@ struct MangaGridItem: View {
                     downsampleWidth: 400 // reduces stuttering caused by rendering large images
                 )
             }
+            .overlay(Color.black.opacity(bookmarked ? 0.25 : 0))
             .overlay(
                 LinearGradient(
                     gradient: Self.gradient,

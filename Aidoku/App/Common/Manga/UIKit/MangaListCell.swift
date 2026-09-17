@@ -70,6 +70,14 @@ class MangaListCell: UICollectionViewCell {
         return imageView
     }()
 
+    private let libraryDimmingView: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor(white: 0, alpha: 0.25)
+        view.isUserInteractionEnabled = false
+        view.isHidden = true
+        return view
+    }()
+
     private lazy var bookmarkImageView = {
         let bookmarkImageView = UIImageView()
         bookmarkImageView.contentMode = .scaleAspectFit
@@ -137,6 +145,7 @@ class MangaListCell: UICollectionViewCell {
     private func configure() {
         selectionView.isHidden = true // not editing by default
 
+        coverImageView.addSubview(libraryDimmingView)
         coverImageView.addSubview(bookmarkImageView)
 
         titleStackView.addArrangedSubview(titleLabel)
@@ -152,6 +161,7 @@ class MangaListCell: UICollectionViewCell {
 
     func constrain() {
         coverImageView.translatesAutoresizingMaskIntoConstraints = false
+        libraryDimmingView.translatesAutoresizingMaskIntoConstraints = false
         bookmarkImageView.translatesAutoresizingMaskIntoConstraints = false
         titleStackView.translatesAutoresizingMaskIntoConstraints = false
         selectionView.translatesAutoresizingMaskIntoConstraints = false
@@ -178,6 +188,11 @@ class MangaListCell: UICollectionViewCell {
             coverImageView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
             coverWidthConstraint!,
             coverHeightConstraint!,
+
+            libraryDimmingView.leadingAnchor.constraint(equalTo: coverImageView.leadingAnchor),
+            libraryDimmingView.trailingAnchor.constraint(equalTo: coverImageView.trailingAnchor),
+            libraryDimmingView.topAnchor.constraint(equalTo: coverImageView.topAnchor),
+            libraryDimmingView.bottomAnchor.constraint(equalTo: coverImageView.bottomAnchor),
 
             bookmarkImageView.trailingAnchor.constraint(equalTo: coverImageView.trailingAnchor, constant: -8),
             bookmarkImageView.topAnchor.constraint(equalTo: coverImageView.topAnchor),
@@ -249,6 +264,8 @@ class MangaListCell: UICollectionViewCell {
         imageTask?.cancel()
         imageTask = nil
         setBadgeVisible(false)
+        libraryDimmingView.isHidden = true
+        bookmarkImageView.image = nil
         hasSubtitle = false
         hasTags = false
         updateDetailVisibility()
@@ -329,6 +346,7 @@ extension MangaListCell {
         titleLabel.text = manga.title
         subtitleLabel.text = manga.authors?.joined(separator: ", ")
         hasSubtitle = !(subtitleLabel.text?.isEmpty ?? true)
+        libraryDimmingView.isHidden = !isBookmarked
         bookmarkImageView.image = isBookmarked ? UIImage(systemName: "bookmark.fill") : nil
 
         if let tags = manga.tags, !tags.isEmpty {
@@ -345,6 +363,8 @@ extension MangaListCell {
     }
 
     func configure(with info: MangaInfo) {
+        libraryDimmingView.isHidden = true
+        bookmarkImageView.image = nil
         identifier = info.id
         titleLabel.text = info.title
         subtitleLabel.text = info.author
