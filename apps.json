@@ -1,0 +1,68 @@
+{
+  "name": "Aidoku Nightly (Amqx)",
+  "identifier": "org.ry-st.Aidoku.altstore",
+  "sourceURL": "https://raw.githubusercontent.com/Amqx/Aidoku/altstore/apps.json",
+  "subtitle": "Amqx's fork of Aidoku",
+  "description": "Latest successful nightly build of the Amqx/Aidoku fork.",
+  "website": "https://github.com/Amqx/Aidoku",
+  "featuredApps": [
+    "org.ry-st.Aidoku"
+  ],
+  "apps": [
+    {
+      "name": "Aidoku Nightly",
+      "bundleIdentifier": "org.ry-st.Aidoku",
+      "developerName": "Amqx",
+      "subtitle": "Free and open source manga reader for iOS and iPadOS",
+      "localizedDescription": "A free and open source manga reader for iOS and iPadOS. Nightly builds of the Amqx fork.",
+      "iconURL": "https://aidoku.app/images/apple-touch-icon.png",
+      "tintColor": "ff375f",
+      "category": "entertainment",
+      "screenshots": [
+        {
+          "imageURL": "https://aidoku.app/images/library.png",
+          "width": 450,
+          "height": 908
+        },
+        {
+          "imageURL": "https://aidoku.app/images/source.png",
+          "width": 450,
+          "height": 908
+        },
+        {
+          "imageURL": "https://aidoku.app/images/reader.png",
+          "width": 450,
+          "height": 908
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [
+          "aps-environment",
+          "com.apple.developer.icloud-container-environment",
+          "com.apple.developer.icloud-container-identifiers",
+          "com.apple.developer.icloud-services",
+          "com.apple.developer.ubiquity-container-identifiers",
+          "com.apple.developer.ubiquity-kvstore-identifier",
+          "com.apple.developer.user-fonts"
+        ],
+        "privacy": {
+          "NSFaceIDUsageDescription": "Aidoku needs FaceID permissions for user-defined settings",
+          "NSLocalNetworkUsageDescription": "Aidoku needs permission to connect to local Komga and Kavita servers",
+          "NSPhotoLibraryUsageDescription": "Aidoku needs permission to save pages in your photo library"
+        }
+      },
+      "versions": [
+        {
+          "version": "0.9",
+          "buildVersion": "20.1",
+          "date": "2026-09-17T22:39:21Z",
+          "localizedDescription": "Nightly build from commit 8e46b92.\nhttps://github.com/Amqx/Aidoku/actions/runs/35282550947",
+          "downloadURL": "https://github.com/Amqx/Aidoku/releases/download/nightly/Aidoku-nightly.ipa",
+          "size": 10670542,
+          "minOSVersion": "15.0"
+        }
+      ]
+    }
+  ],
+  "news": []
+}
