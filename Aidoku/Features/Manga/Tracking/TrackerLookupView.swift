@@ -48,9 +48,11 @@ struct TrackerLookupView: View {
                                             .contentShape(Rectangle())
                                     }
                                     .buttonStyle(.plain)
+                                    .offsetListSeparator()
                                     .accessibilityHint(NSLocalizedString("VIEW_ON_WEBSITE"))
                                 case .noMatch, .failed:
                                     TrackerLookupResultView(result: result, mangaTitle: manga.title)
+                                        .offsetListSeparator()
                             }
                         }
                     } header: {
