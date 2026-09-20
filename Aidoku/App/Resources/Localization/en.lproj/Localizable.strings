@@ -811,6 +811,10 @@
 "READER_ORIENTATION" = "Orientation";
 "FOLLOW_DEVICE" = "Follow Device";
 
+// Tracker lookup browser
+"OPEN_LOOKUP_LINKS_EXTERNALLY" = "Open Lookup Links in External Browser";
+"OPEN_LOOKUP_LINKS_EXTERNALLY_INFO" = "Open tracker lookup matches in your default browser. When disabled, links open within Aidoku.";
+
 // Keyboard shortcuts
 "FOCUS_ITEM_LEFT" = "Focus item to the left";
 "FOCUS_ITEM_RIGHT" = "Focus item to the right";

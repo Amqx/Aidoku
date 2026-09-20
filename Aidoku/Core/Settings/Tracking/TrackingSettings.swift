@@ -9,10 +9,12 @@ struct TrackingSettings: Sendable {
     var keys: [any SettingsDefault] {
         [
             updateAfterReading,
-            autoSyncFromTracker
+            autoSyncFromTracker,
+            openLookupLinksExternally
         ]
     }
 
     let updateAfterReading = SettingsKey<Bool>("Tracking.updateAfterReading", default: true)
     let autoSyncFromTracker = SettingsKey<Bool>("Tracking.autoSyncFromTracker", default: false)
+    let openLookupLinksExternally = SettingsKey<Bool>("Tracking.openLookupLinksExternally", default: false)
 }

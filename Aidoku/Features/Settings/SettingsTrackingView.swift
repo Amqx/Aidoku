@@ -55,6 +55,16 @@ struct SettingsTrackingView: View {
                 Text(NSLocalizedString("AUTO_SYNC_HISTORY_INFO"))
             }
 
+            Section {
+                SettingView(setting: .init(
+                    key: AppSettings.tracking.openLookupLinksExternally.key,
+                    title: NSLocalizedString("OPEN_LOOKUP_LINKS_EXTERNALLY"),
+                    value: .toggle(.init())
+                ))
+            } footer: {
+                Text(NSLocalizedString("OPEN_LOOKUP_LINKS_EXTERNALLY_INFO"))
+            }
+
             Section(NSLocalizedString("TRACKERS")) {
                 ForEach(trackers.indices, id: \.self) { index in
                     let tracker = trackers[index]

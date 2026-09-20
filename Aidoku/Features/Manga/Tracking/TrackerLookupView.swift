@@ -13,8 +13,11 @@ struct TrackerLookupView: View {
 
     @State private var loading = true
     @State private var results: [TrackerLookupResult] = []
+    @State private var safariUrl: URL?
+    @State private var showSafari = false
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
 
     // no tracker returned anything usable, so the rows would all say the same thing
     private var unavailable: Bool {
@@ -27,7 +30,28 @@ struct TrackerLookupView: View {
                 if !loading && !unavailable {
                     Section {
                         ForEach(results) { result in
-                            TrackerLookupResultView(result: result, mangaTitle: manga.title)
+                            switch result.state {
+                                case let .match(item), let .possibleMatch(item):
+                                    Button {
+                                        Task {
+                                            guard let url = await result.tracker.getUrl(trackId: item.id) else { return }
+                                            if AppSettings.tracking.openLookupLinksExternally.get() {
+                                                openURL(url)
+                                            } else {
+                                                safariUrl = url
+                                                showSafari = true
+                                            }
+                                        }
+                                    } label: {
+                                        TrackerLookupResultView(result: result, mangaTitle: manga.title)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .contentShape(Rectangle())
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityHint(NSLocalizedString("VIEW_ON_WEBSITE"))
+                                case .noMatch, .failed:
+                                    TrackerLookupResultView(result: result, mangaTitle: manga.title)
+                            }
                         }
                     } header: {
                         Text(NSLocalizedString("TRACKER_LOOKUP_DESCRIPTION"))
@@ -57,6 +81,9 @@ struct TrackerLookupView: View {
             }
             .navigationTitle(NSLocalizedString("TRACKER_LOOKUP"))
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showSafari) {
+                SafariView(url: $safariUrl)
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     CloseButton {
