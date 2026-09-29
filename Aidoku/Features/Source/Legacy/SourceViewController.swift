@@ -160,8 +160,9 @@ class SourceViewController: OldMangaCollectionViewController {
                     context: context
                 )
             }
+            guard cell.identifier == info.id else { return }
             cell.showsBookmark = inLibrary
-            await cell.loadImage(url: info.coverUrl)
+            await cell.loadImage(url: info.coverUrl, for: info.id)
         }
     }
 

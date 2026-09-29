@@ -62,7 +62,7 @@ class OldMangaCollectionViewController: BaseCollectionViewController {
         cell.title = info.title
 
         Task {
-            await cell.loadImage(url: info.coverUrl)
+            await cell.loadImage(url: info.coverUrl, for: info.id)
         }
 
         cell.setSelected(cell.isSelected, animated: false)
