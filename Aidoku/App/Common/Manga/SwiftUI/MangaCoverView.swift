@@ -18,6 +18,7 @@ struct MangaCoverView: View {
     var width: CGFloat?
     var height: CGFloat?
     var downsampleWidth: CGFloat?
+    var processCoverImage = true
     var contentMode: ContentMode = .fill
     var placeholder = "MangaPlaceholder"
     var bookmarked: Bool = false
@@ -30,6 +31,7 @@ struct MangaCoverView: View {
             width: width,
             height: height,
             downsampleWidth: downsampleWidth,
+            processCoverImage: processCoverImage,
             contentMode: contentMode,
             placeholder: placeholder,
             isMangaCover: true

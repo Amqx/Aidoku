@@ -18,6 +18,7 @@ struct SourceImageView: View {
     var width: CGFloat?
     var height: CGFloat?
     var downsampleWidth: CGFloat?
+    var processCoverImage = true
     var contentMode: ContentMode = .fill
     var placeholder = "MangaPlaceholder"
     var isMangaCover = false
@@ -29,7 +30,7 @@ struct SourceImageView: View {
         if let downsampleWidth {
             processors.append(ImageProcessors.Resize(width: downsampleWidth))
         }
-        if let source, source.features.processesCovers {
+        if processCoverImage, let source, source.features.processesCovers {
             processors.append(CoverInterceptorProcessor(source: source))
         }
         return processors
