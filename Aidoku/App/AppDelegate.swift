@@ -180,7 +180,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             }()
             let dataCache = try? DataCache(name: "app.aidoku.Aidoku.datacache") // disk cache
             let imageCache = Nuke.ImageCache() // memory cache
-            dataCache?.sizeLimit = 500 * 1024 * 1024
+            dataCache?.sizeLimit = 1_000 * 1024 * 1024
             imageCache.costLimit = 100 * 1024 * 1024
             $0.dataCache = dataCache
             $0.imageCache = imageCache

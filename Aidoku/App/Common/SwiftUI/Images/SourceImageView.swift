@@ -12,6 +12,7 @@ import SwiftUI
 
 struct SourceImageView: View {
     var source: AidokuRunner.Source?
+    var mangaIdentifier: MangaIdentifier?
 
     let imageUrl: String
     var width: CGFloat?
@@ -25,7 +26,7 @@ struct SourceImageView: View {
     private var processors: [ImageProcessing] {
         var processors: [ImageProcessing] = []
         if let downsampleWidth {
-            processors.append(DownsampleProcessor(width: downsampleWidth))
+            processors.append(ImageProcessors.Resize(width: downsampleWidth))
         }
         if let source, source.features.processesCovers {
             processors.append(CoverInterceptorProcessor(source: source))
@@ -59,6 +60,13 @@ struct SourceImageView: View {
             }
         }
         .processors(processors)
+        .onCompletion { result in
+            guard case .failure(let error) = result, let mangaIdentifier else { return }
+            Task {
+                guard let newURL = await CoverRecovery.recover(from: error, identifier: mangaIdentifier) else { return }
+                await loadImageRequest(url: newURL.absoluteString)
+            }
+        }
         .onAppear {
             guard imageRequest == nil else { return }
             Task {
@@ -81,6 +89,14 @@ struct SourceImageView: View {
         }
         guard let source, let url, !url.isFileURL else {
             imageRequest = ImageRequest(url: url)
+            return
+        }
+        let cachedRequest = ImageRequest(
+            url: url,
+            userInfo: [.processesKey: source.features.processesCovers]
+        )
+        if ImagePipeline.shared.cache.containsCachedImage(for: cachedRequest) {
+            imageRequest = cachedRequest
             return
         }
         imageRequest = ImageRequest(

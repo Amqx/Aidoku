@@ -160,7 +160,7 @@ extension MangaCollectionViewController {
             cell.title = manga.title
             cell.showsBookmark = self?.bookmarkedItems.contains(manga.key) ?? false
             Task {
-                await cell.loadImage(url: manga.cover.flatMap { URL(string: $0) })
+                await cell.loadImage(url: manga.cover.flatMap { URL(string: $0) }, for: manga.identifier)
             }
         }
     }
