@@ -17,6 +17,7 @@ This is a personal fork of Aidoku with additional features/ changes.
 
 ### Performance and reliability
 
+- Cover images load reliably, even when offline
 - Faster library and history operations
 - Lower reader memory usage, bounded webtoon preloading, and disk-backed temporary page data
 - More reliable reader position restoration during text saves and webtoon layout changes
