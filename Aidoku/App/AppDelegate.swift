@@ -180,6 +180,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
 
         DataLoader.sharedUrlCache.diskCapacity = 0
+        _ = CoverDataCache.cache
 
         let pipeline = ImagePipeline(delegate: self) {
             let dataLoader: DataLoader = {
@@ -838,6 +839,13 @@ extension AppDelegate {
 }
 
 extension AppDelegate: ImagePipeline.Delegate {
+    nonisolated func dataCache(for request: ImageRequest, pipeline: ImagePipeline) -> (any DataCaching)? {
+        if request.userInfo[.isMangaCover] as? Bool == true {
+            return CoverDataCache.cache ?? pipeline.configuration.dataCache
+        }
+        return pipeline.configuration.dataCache
+    }
+
     nonisolated func imageDecoder(for context: ImageDecodingContext, pipeline: ImagePipeline) -> (any ImageDecoding)? {
         if context.request.userInfo[.processesKey] as? Bool == true {
             // when using a page processor, don't decode data as an image since it may be invalid

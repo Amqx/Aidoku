@@ -31,7 +31,8 @@ struct MangaCoverView: View {
             height: height,
             downsampleWidth: downsampleWidth,
             contentMode: contentMode,
-            placeholder: placeholder
+            placeholder: placeholder,
+            isMangaCover: true
         )
         .overlay(Color.black.opacity(bookmarked ? 0.25 : 0))
         .overlay(

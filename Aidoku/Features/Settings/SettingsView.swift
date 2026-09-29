@@ -209,6 +209,9 @@ extension SettingsView {
                 if let nukeCache = ImagePipeline.shared.configuration.dataCache as? DataCache {
                     totalCacheSize += nukeCache.totalSize
                 }
+                if let coverCache = CoverDataCache.cache {
+                    totalCacheSize += coverCache.totalSize
+                }
                 let message = NSLocalizedString("CLEAR_NETWORK_CACHE_TEXT")
                     + "\n\n"
                     + String(
@@ -375,6 +378,7 @@ extension SettingsView {
         if let dataCache = ImagePipeline.shared.configuration.dataCache as? DataCache {
             dataCache.removeAll()
         }
+        CoverDataCache.cache?.removeAll()
         // clear memory cache
         if let imageCache = ImagePipeline.shared.configuration.imageCache as? Nuke.ImageCache {
             imageCache.removeAll()

@@ -30,7 +30,8 @@ struct MangaGridItem: View {
                 SourceImageView(
                     source: source,
                     imageUrl: coverImage,
-                    downsampleWidth: 400 // reduces stuttering caused by rendering large images
+                    downsampleWidth: 400, // reduces stuttering caused by rendering large images
+                    isMangaCover: true
                 )
             }
             .overlay(Color.black.opacity(bookmarked ? 0.25 : 0))

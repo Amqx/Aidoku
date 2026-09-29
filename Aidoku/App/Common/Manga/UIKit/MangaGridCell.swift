@@ -274,7 +274,10 @@ extension MangaGridCell {
         guard self.identifier == identifier, imageLoadVersion == loadVersion else { return }
 
         var urlRequest = URLRequest(url: url)
-        var cached = ImagePipeline.shared.cache.containsCachedImage(for: .init(urlRequest: urlRequest))
+        var cached = ImagePipeline.shared.cache.containsCachedImage(for: .init(
+            urlRequest: urlRequest,
+            userInfo: [.isMangaCover: true]
+        ))
 
         if !cached {
             if let fileUrl = url.toAidokuFileUrl() {
@@ -295,7 +298,7 @@ extension MangaGridCell {
         let request = ImageRequest(
             urlRequest: urlRequest,
             processors: processors,
-            userInfo: [.processesKey: source?.features.processesCovers ?? false]
+            userInfo: [.processesKey: source?.features.processesCovers ?? false, .isMangaCover: true]
         )
 
         cached = cached || ImagePipeline.shared.cache.containsCachedImage(for: request)

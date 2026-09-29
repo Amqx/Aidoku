@@ -20,6 +20,7 @@ struct SourceImageView: View {
     var downsampleWidth: CGFloat?
     var contentMode: ContentMode = .fill
     var placeholder = "MangaPlaceholder"
+    var isMangaCover = false
 
     @State private var imageRequest: ImageRequest?
 
@@ -83,17 +84,18 @@ struct SourceImageView: View {
 
     func loadImageRequest(url: String) async {
         let url = URL(string: url)
+        let coverInfo: [ImageRequest.UserInfoKey: any Sendable] = isMangaCover ? [.isMangaCover: true] : [:]
         if let fileUrl = url?.toAidokuFileUrl() {
-            imageRequest = ImageRequest(url: fileUrl)
+            imageRequest = ImageRequest(url: fileUrl, userInfo: coverInfo)
             return
         }
         guard let source, let url, !url.isFileURL else {
-            imageRequest = ImageRequest(url: url)
+            imageRequest = ImageRequest(url: url, userInfo: coverInfo)
             return
         }
         let cachedRequest = ImageRequest(
             url: url,
-            userInfo: [.processesKey: source.features.processesCovers]
+            userInfo: [.processesKey: source.features.processesCovers, .isMangaCover: isMangaCover]
         )
         if ImagePipeline.shared.cache.containsCachedImage(for: cachedRequest) {
             imageRequest = cachedRequest
@@ -101,7 +103,7 @@ struct SourceImageView: View {
         }
         imageRequest = ImageRequest(
             urlRequest: await source.getModifiedImageRequest(url: url, context: nil),
-            userInfo: [.processesKey: source.features.processesCovers]
+            userInfo: [.processesKey: source.features.processesCovers, .isMangaCover: isMangaCover]
         )
     }
 }

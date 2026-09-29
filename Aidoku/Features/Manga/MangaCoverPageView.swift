@@ -193,7 +193,7 @@ struct MangaCoverPageView: View {
     }
 
     func loadImage(url: URL) async throws -> UIImage {
-        try await ImagePipeline.shared.image(for: url)
+        try await ImagePipeline.shared.image(for: ImageRequest(url: url, userInfo: [.isMangaCover: true]))
     }
 
     func setCover(url: String, original: Bool = false) {
