@@ -7,7 +7,7 @@ extension ImageRequest.UserInfoKey {
 enum CoverDataCache {
     static let cache: DataCache? = {
         let cache = try? DataCache(name: "org.ry-st.Aidoku.covercache")
-        cache?.sizeLimit = 250 * 1024 * 1024
+        cache?.sizeLimit = 500 * 1024 * 1024
         return cache
     }()
 }
