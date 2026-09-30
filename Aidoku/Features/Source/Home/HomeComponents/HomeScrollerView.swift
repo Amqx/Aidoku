@@ -195,11 +195,11 @@ struct HomeScrollerView: View {
                 }
             }
         }
-        .onReceive(NotificationCenter.default.publisher(for: .addToLibrary).receive(on: DispatchQueue.main)) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: .addToLibrary)) { notification in
             guard let id = notification.object as? MangaIdentifier, id.sourceKey == source.key else { return }
             bookmarkedItems.insert(id.mangaKey)
         }
-        .onReceive(NotificationCenter.default.publisher(for: .removeFromLibrary).receive(on: DispatchQueue.main)) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: .removeFromLibrary)) { notification in
             guard let id = notification.object as? MangaIdentifier, id.sourceKey == source.key else { return }
             bookmarkedItems.remove(id.mangaKey)
         }
