@@ -1,7 +1,6 @@
 # Xcode
 *.ips
 build
-scripts
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/

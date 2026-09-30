@@ -9,6 +9,7 @@ This is a personal fork of Aidoku with additional features/ changes.
 - Automatic Google Drive uploads for scheduled backups
 - A smaller custom backup format, typically around one-quarter the size of upstream backups
     - Backups created by this fork are incompatible with upstream Aidoku
+        - For converting backups back to upstream compatible ones, see [convert_backup.py](scripts/convert_backup.py)
 - Quick rating lookups from Trackers
 - Persistent metadata and chapter caching for viewed and history titles outside the library
 - Cancelable library updates that can work in the background
