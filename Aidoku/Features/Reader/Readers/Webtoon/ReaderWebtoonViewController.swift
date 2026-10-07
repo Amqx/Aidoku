@@ -229,18 +229,16 @@ class ReaderWebtoonViewController: ZoomableCollectionViewController {
         else { return false }
         if let chapter, chapters.firstIndex(of: chapter) == index { return false }
 
-        // test the section's frame against the viewport rather than sampling index paths.
-        // indexPathForItem goes nil right after a batch update, and elsewhere in this file a nil
-        // path means "past the end", so absence of one is not evidence a section is off screen
-        let height = layout.getHeightFor(section: index)
-        // an unmeasured section reports 0, which we can't tell from a real empty one, so leave it
-        guard height > 0 else { return false }
-        var minY: CGFloat = 0
-        for idx in 0..<index {
-            minY += layout.getHeightFor(section: idx)
-        }
+        // test the section's frame against the viewport rather than sampling index paths
+        guard
+            !pages[index].isEmpty,
+            let firstFrame = layout.layoutAttributesForItem(at: IndexPath(item: 0, section: index))?.frame,
+            let lastFrame = layout.layoutAttributesForItem(at: IndexPath(item: pages[index].count - 1, section: index))?.frame,
+            firstFrame.height > 0,
+            lastFrame.height > 0
+        else { return false }
         let visible = CGRect(origin: collectionNode.contentOffset, size: collectionNode.bounds.size)
-        return minY + height <= visible.minY || minY >= visible.maxY
+        return lastFrame.maxY <= visible.minY || firstFrame.minY >= visible.maxY
     }
 
     private func setLiveTextButtonHidden(_ hidden: Bool) {
@@ -647,16 +645,23 @@ extension ReaderWebtoonViewController {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
 
-        chapters.insert(prevChapter, at: 0)
-        pages.insert(
-            [Page(
-                type: .prevInfoPage,
+        var chapterPages = [Page(
+            type: .prevInfoPage,
+            sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
+            chapterId: prevChapter.key,
+            index: -1
+        )] + preloadedPages
+        // A trimmed chapter may have owned the separator before the retained neighbor.
+        if pages.first?.first?.type == .imagePage {
+            chapterPages.append(Page(
+                type: .nextInfoPage,
                 sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
                 chapterId: prevChapter.key,
-                index: -1
-            )]  + preloadedPages,
-            at: 0
-        )
+                index: -2
+            ))
+        }
+        chapters.insert(prevChapter, at: 0)
+        pages.insert(chapterPages, at: 0)
 
         let layout = collectionNode.collectionViewLayout as? VerticalContentOffsetPreservingLayout
         layout?.preserveOffsetAcrossChangeAbove()
@@ -721,13 +726,23 @@ extension ReaderWebtoonViewController {
             try? await Task.sleep(nanoseconds: 500_000_000)
         }
 
-        chapters.append(nextChapter)
-        pages.append(preloadedPages + [Page(
+        var chapterPages = preloadedPages + [Page(
             type: .nextInfoPage,
             sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
             chapterId: nextChapter.id,
             index: -2
-        )])
+        )]
+        // A trimmed chapter may have owned the separator after the retained neighbor.
+        if pages.last?.last?.type == .imagePage {
+            chapterPages.insert(Page(
+                type: .prevInfoPage,
+                sourceId: viewModel.source?.key ?? viewModel.manga.sourceKey,
+                chapterId: nextChapter.key,
+                index: -1
+            ), at: 0)
+        }
+        chapters.append(nextChapter)
+        pages.append(chapterPages)
 
         CrashReporter.breadcrumb("append: inserting section \(pages.count - 1) — \(consistencySnapshot)")
 
