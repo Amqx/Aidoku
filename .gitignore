@@ -1,5 +1,6 @@
 # Xcode
 *.ips
+*.log
 build
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
