@@ -176,7 +176,7 @@ struct SourceHomeContentView: View {
         }
     }
 
-    @ViewBuilder
+    @ContentBuilder
     private func scrollContent(containerWidth: CGFloat) -> some View {
         if loading {
             // loading skeleton
@@ -224,7 +224,7 @@ struct SourceHomeContentView: View {
         }
     }
 
-    @ViewBuilder
+    @ContentBuilder
     private func loadingView(width: CGFloat) -> some View {
         Group {
             if listingSelection == 0 && source.features.providesHome {
@@ -240,7 +240,7 @@ struct SourceHomeContentView: View {
         }
     }
 
-    @ViewBuilder
+    @ContentBuilder
     private func homeView(for home: Home, partial: Bool) -> some View {
         VStack(spacing: 24) {
             ForEach(home.components.indices, id: \.self) { offset in
