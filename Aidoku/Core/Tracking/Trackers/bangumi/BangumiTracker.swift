@@ -206,6 +206,11 @@ private extension BangumiTracker {
     }
 
     func getSubjectType(for subject: BangumiSubject) -> MediaType {
+        // a novel can be a standalone volume, which has its series flag unset
+        if subject.platform == "小说" {
+            return .novel
+        }
+
         // First check series and platform if available
         if let series = subject.series {
             if !series {

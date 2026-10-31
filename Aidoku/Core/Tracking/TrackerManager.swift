@@ -341,6 +341,7 @@ actor TrackerManager {
     func lookupDetails(for manga: AidokuRunner.Manga) async -> [TrackerLookupResult] {
         let trackers = Self.trackers.filter { $0.canSearch(mangaId: manga.identifier) }
         let trackerOrder = Dictionary(uniqueKeysWithValues: trackers.enumerated().map { ($1.id, $0) })
+        let format = TrackerSeriesFormat(manga: manga)
 
         let results = await withTaskGroup(of: TrackerLookupResult.self) { group in
             for tracker in trackers {
@@ -350,8 +351,8 @@ actor TrackerManager {
                             for: manga,
                             includeNsfw: manga.contentRating != .safe
                         )
-                        let state = Self.bestMatch(in: items, title: manga.title)
-                        return TrackerLookupResult(tracker: tracker, state: state)
+                        let state = Self.bestMatch(in: items, title: manga.title, format: format)
+                        return TrackerLookupResult(tracker: tracker, state: state, items: items)
                     } catch {
                         LogManager.logger.error("Failed to look up details from tracker \(tracker.id): \(error)")
                         return TrackerLookupResult(tracker: tracker, state: .failed)
@@ -373,22 +374,32 @@ actor TrackerManager {
 
     /// Picks the catalog entry that best corresponds to a given title.
     ///
-    /// An entry is only a `match` if one of its titles matches after normalization. Otherwise the
-    /// tracker's own top result is returned as a `possibleMatch`, since it can't be confirmed to
-    /// describe the same series.
-    nonisolated static func bestMatch(in items: [TrackSearchItem], title: String) -> TrackerLookupResult.State {
+    /// An entry is only a `match` if one of its titles matches after normalization and its format
+    /// doesn't conflict with the given one, preferring an entry whose format is confirmed over one
+    /// that doesn't report any. Otherwise the tracker's top result of a compatible format is
+    /// returned as a `possibleMatch`, since it can't be confirmed to describe the same series.
+    nonisolated static func bestMatch(
+        in items: [TrackSearchItem],
+        title: String,
+        format: TrackerSeriesFormat? = nil
+    ) -> TrackerLookupResult.State {
+        let compatibleItems = items.filter {
+            guard let format, let itemFormat = TrackerSeriesFormat(mediaType: $0.type) else { return true }
+            return itemFormat == format
+        }
         let normalizedTitle = normalizedTrackerTitle(title)
-        let match = items.first {
+        let matches = compatibleItems.filter {
             $0.titles.contains { normalizedTrackerTitle($0) == normalizedTitle }
         }
-        if let match {
+        let confirmedMatch = format == nil ? nil : matches.first { TrackerSeriesFormat(mediaType: $0.type) != nil }
+        if let match = confirmedMatch ?? matches.first {
             return .match(match)
         }
-        guard let first = items.first else { return .noMatch }
+        guard let first = compatibleItems.first ?? items.first else { return .noMatch }
         return .possibleMatch(first)
     }
 
-    private nonisolated static func normalizedTrackerTitle(_ title: String) -> String {
+    nonisolated static func normalizedTrackerTitle(_ title: String) -> String {
         title
             .folding(options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive], locale: .current)
             .unicodeScalars
@@ -727,7 +738,7 @@ extension TrackerManager {
     }
 }
 
-// MARK: Tracking State
+
 extension TrackerManager {
     func processPendingUpdates() async {
         guard !trackingState.pendingPageUpdates.isEmpty else { return }
